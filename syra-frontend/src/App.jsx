@@ -1,0 +1,341 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Route, Routes } from 'react-router-dom';
+import Footer from './components/Footer';
+import Header from './components/Header';
+import AuthModal from './components/AuthModal';
+import HomePage from './pages/HomePage';
+import ServicesPage from './pages/ServicesPage';
+import BookingPage from './pages/BookingPage';
+import ContactPage from './pages/ContactPage';
+import AdminPage from './pages/AdminPage';
+import MyAppointmentsPage from './pages/MyAppointmentsPage';
+import NotFoundPage from './pages/NotFoundPage';
+import {
+  fetchSchedules,
+  fetchServices,
+  fetchUsersByRole,
+  findOrCreateUser,
+  loginDevelopmentUser,
+  saveSchedule,
+  createService,
+  updateService,
+  deleteService,
+} from './services/api';
+
+const SESSION_KEY = 'syra.session';
+
+function normalizeSession(user) {
+  if (!user?.email) return null;
+
+  return {
+    id: user.id ?? null,
+    nome: user.nome || user.name || user.email.split('@')[0],
+    email: user.email,
+    telefone: user.telefone || '',
+    fotoPerfilUrl: user.fotoPerfilUrl || user.picture || '',
+    role: user.role || user.papel || '',
+  };
+}
+
+function loadStoredSession() {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function readSessionFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const email = params.get('email');
+
+  if (!email) return null;
+
+  const token = params.get('token');
+  if (token) {
+    // Salvar o token no localStorage para uso futuro
+    window.localStorage.setItem('syra.token', token);
+  }
+
+  return {
+    email,
+    nome: params.get('nome') || params.get('name') || '',
+    fotoPerfilUrl: params.get('foto') || params.get('picture') || '',
+    role: params.get('role') || '',
+  };
+}
+
+function clearSessionParamsFromUrl() {
+  const url = new URL(window.location.href);
+  ['email', 'nome', 'name', 'foto', 'picture', 'role', 'token'].forEach((key) => url.searchParams.delete(key));
+  window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
+}
+
+function AccessNotice({ session, onGoogleLogin, onOpenAuth }) {
+  return (
+    <section className="page-section">
+      <div className="site-shell card not-found-card auth-required-card">
+        <span className="eyebrow eyebrow-dark">Acesso restrito</span>
+        <h1>{session ? 'Seu perfil não tem acesso ao painel admin.' : 'Faça login para continuar.'}</h1>
+        <p>
+          {session
+            ? 'Somente os e-mails cadastrados como ADMIN no backend podem editar a agenda de trabalho.'
+            : 'Use o login Google para identificar o perfil corretamente. Enquanto o retorno OAuth do backend não volta ao frontend, o acesso local de desenvolvimento continua disponível.'}
+        </p>
+        <div className="hero-actions">
+          {!session ? (
+            <>
+              <button type="button" className="button button-primary" onClick={onGoogleLogin}>
+                Entrar com Google
+              </button>
+              <button type="button" className="button button-secondary" onClick={onOpenAuth}>
+                Acesso local
+              </button>
+            </>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default function App() {
+  const [services, setServices] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [session, setSession] = useState(() => loadStoredSession());
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+
+  const loadInitialData = useCallback(async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const [servicesData, schedulesData, adminsData] = await Promise.all([
+        fetchServices(),
+        fetchSchedules(),
+        fetchUsersByRole('ADMIN').catch(() => []),
+      ]);
+
+      setServices(servicesData);
+      setSchedules(schedulesData);
+      setAdmins(Array.isArray(adminsData) ? adminsData : []);
+    } catch (err) {
+      const apiMessage = err?.response?.data?.message;
+      setError(apiMessage || 'Não foi possível carregar os dados do sistema.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadInitialData();
+  }, [loadInitialData]);
+
+  useEffect(() => {
+    if (session) {
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    } else {
+      window.localStorage.removeItem(SESSION_KEY);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    const sessionFromUrl = readSessionFromUrl();
+    if (!sessionFromUrl) return;
+
+    syncSession(sessionFromUrl);
+    clearSessionParamsFromUrl();
+  }, []);
+
+  const isAdmin = useMemo(() => {
+    if (!session?.email) return false;
+
+    const adminEmails = new Set(
+      admins
+        .map((admin) => String(admin?.email || '').trim().toLowerCase())
+        .filter(Boolean),
+    );
+
+    return session.role?.toUpperCase() === 'ADMIN' || adminEmails.has(session.email.toLowerCase());
+  }, [admins, session]);
+
+  async function syncSession(profile) {
+    setAuthBusy(true);
+    setAuthError('');
+
+    try {
+      const user = await findOrCreateUser({
+        nome: profile.nome || profile.name || profile.email?.split('@')[0] || 'Cliente Syra',
+        email: profile.email,
+        telefone: profile.telefone || '',
+      });
+
+      setSession(normalizeSession({ ...profile, ...user }));
+    } catch (err) {
+      const apiMessage = err?.response?.data?.message;
+      setAuthError(apiMessage || 'Não foi possível sincronizar o usuário com o backend.');
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handleDevelopmentLogin(profile) {
+    setAuthBusy(true);
+    setAuthError('');
+
+    try {
+      const user = await loginDevelopmentUser(profile);
+      setSession(normalizeSession(user) || normalizeSession(profile));
+      setAuthModalOpen(false);
+    } catch (err) {
+      const apiMessage = err?.response?.data?.message;
+      setAuthError(apiMessage || 'Não foi possível concluir o login local.');
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  function handleGoogleLogin() {
+    window.location.assign('/oauth2/authorization/google');
+  }
+
+  function handleLogout() {
+    setSession(null);
+    setAuthError('');
+    window.localStorage.removeItem('syra.token');
+  }
+
+  function handleSessionUpdate(patch) {
+    setSession((current) => (current ? { ...current, ...patch } : current));
+  }
+
+  async function handleSaveSchedule(schedule) {
+    const saved = await saveSchedule(schedule);
+    await loadInitialData();
+    return saved;
+  }
+
+  async function handleCreateService(payload) {
+    const saved = await createService(payload);
+    await loadInitialData();
+    return saved;
+  }
+
+  async function handleUpdateService(id, payload) {
+    const saved = await updateService(id, payload);
+    await loadInitialData();
+    return saved;
+  }
+
+  async function handleDeleteService(id) {
+    await deleteService(id);
+    await loadInitialData();
+  }
+
+  return (
+    <div className="app-shell">
+      <Header
+        session={session}
+        isAdmin={isAdmin}
+        authBusy={authBusy}
+        onGoogleLogin={handleGoogleLogin}
+        onOpenAuth={() => setAuthModalOpen(true)}
+        onLogout={handleLogout}
+      />
+
+      {error ? (
+        <div className="site-shell global-alert" role="alert">
+          {error}
+        </div>
+      ) : null}
+
+      {authError ? (
+        <div className="site-shell global-alert" role="alert">
+          {authError}
+        </div>
+      ) : null}
+
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <HomePage
+              services={services}
+              schedules={schedules}
+              loading={loading}
+              session={session}
+              onGoogleLogin={handleGoogleLogin}
+              onOpenAuth={() => setAuthModalOpen(true)}
+            />
+          }
+        />
+        <Route path="/servicos" element={<ServicesPage services={services} loading={loading} />} />
+        <Route
+          path="/agendar"
+          element={
+            <BookingPage
+              services={services}
+              schedules={schedules}
+              session={session}
+              onGoogleLogin={handleGoogleLogin}
+              onSessionUpdate={handleSessionUpdate}
+            />
+          }
+        />
+        <Route
+          path="/contato"
+          element={<ContactPage schedules={schedules} loading={loading} session={session} />}
+        />
+        <Route
+          path="/meus-agendamentos"
+          element={
+            <MyAppointmentsPage
+              session={session}
+              onGoogleLogin={handleGoogleLogin}
+            />
+          }
+        />
+        <Route
+          path="/admin"
+          element={
+            isAdmin ? (
+              <AdminPage
+                session={session}
+                schedules={schedules}
+                services={services}
+                onSaveSchedule={handleSaveSchedule}
+                onCreateService={handleCreateService}
+                onUpdateService={handleUpdateService}
+                onDeleteService={handleDeleteService}
+                loading={loading}
+              />
+            ) : (
+              <AccessNotice
+                session={session}
+                onGoogleLogin={handleGoogleLogin}
+                onOpenAuth={() => setAuthModalOpen(true)}
+              />
+            )
+          }
+        />
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+
+      <Footer isAdmin={isAdmin} />
+
+      <AuthModal
+        open={authModalOpen}
+        submitting={authBusy}
+        error={authError}
+        onClose={() => setAuthModalOpen(false)}
+        onSubmit={handleDevelopmentLogin}
+      />
+    </div>
+  );
+}

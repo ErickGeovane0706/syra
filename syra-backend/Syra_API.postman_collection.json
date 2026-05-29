@@ -1,0 +1,277 @@
+{
+  "info": {
+    "name": "SYRA API",
+    "description": "API de Agendamento Médico - Testes Essenciais",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Verificar API",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/usuarios",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "usuarios"]
+        }
+      }
+    },
+    {
+      "name": "2. Criar Admin Erick",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Admin Erick\",\n  \"email\": \"erickgeovane2002@gmail.com\",\n  \"senha\": \"admin123\",\n  \"cpf\": \"11111111111\",\n  \"role\": \"ADMIN\",\n  \"telefone\": \"11987654321\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/usuarios/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "usuarios", "register"]
+        }
+      }
+    },
+    {
+      "name": "3. Criar Admin Valdilene",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Admin Valdilene\",\n  \"email\": \"valdilenehyuuga1@gmail.com\",\n  \"senha\": \"admin123\",\n  \"cpf\": \"22222222222\",\n  \"role\": \"ADMIN\",\n  \"telefone\": \"11912345678\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/usuarios/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "usuarios", "register"]
+        }
+      }
+    },
+    {
+      "name": "4. Criar Cliente Teste",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Cliente Teste\",\n  \"email\": \"cliente@teste.com\",\n  \"senha\": \"cliente123\",\n  \"cpf\": \"33333333333\",\n  \"role\": \"CLIENTE\",\n  \"telefone\": \"11999999999\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/usuarios/register",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "usuarios", "register"]
+        }
+      }
+    },
+    {
+      "name": "5. Listar Usuários",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/usuarios",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "usuarios"]
+        }
+      }
+    },
+    {
+      "name": "6. Criar Serviço 1",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Consulta Médica\",\n  \"descricao\": \"Consulta clínica geral\",\n  \"duracao\": 30,\n  \"preco\": 150.00,\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/servicos",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "servicos"]
+        }
+      }
+    },
+    {
+      "name": "7. Criar Serviço 2",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nome\": \"Exame de Sangue\",\n  \"descricao\": \"Exames laboratoriais\",\n  \"duracao\": 15,\n  \"preco\": 80.00,\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/servicos",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "servicos"]
+        }
+      }
+    },
+    {
+      "name": "8. Listar Serviços",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/servicos",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "servicos"]
+        }
+      }
+    },
+    {
+      "name": "9. Criar Horário Segunda",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"diaSemana\": \"MONDAY\",\n  \"horaInicio\": \"09:00\",\n  \"horaFim\": \"17:00\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/horarios",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "horarios"]
+        }
+      }
+    },
+    {
+      "name": "10. Criar Horário Terça",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"diaSemana\": \"TUESDAY\",\n  \"horaInicio\": \"08:00\",\n  \"horaFim\": \"16:00\",\n  \"ativo\": true\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/horarios",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "horarios"]
+        }
+      }
+    },
+    {
+      "name": "11. Listar Horários",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/horarios",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "horarios"]
+        }
+      }
+    },
+    {
+      "name": "12. Criar Agendamento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"usuarioId\": 3,\n  \"servicoId\": 1,\n  \"dataHora\": \"2026-03-15T10:00:00\",\n  \"observacoes\": \"Primeira consulta\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/agendamentos",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "agendamentos"]
+        }
+      }
+    },
+    {
+      "name": "13. Listar Agendamentos",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/agendamentos",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "agendamentos"]
+        }
+      }
+    },
+    {
+      "name": "14. Confirmar Agendamento",
+      "request": {
+        "method": "PATCH",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/agendamentos/1/confirmar",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "8080",
+          "path": ["api", "agendamentos", "1", "confirmar"]
+        }
+      }
+    }
+  ]
+}

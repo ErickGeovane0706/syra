@@ -1,0 +1,63 @@
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: syra-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: syra_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=pt_BR.UTF-8"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U admin" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - syra-network
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: syra-mailhog
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web UI
+    environment:
+      MH_STORAGE: maildir
+      MH_MAILDIR_PATH: /maildir
+    volumes:
+      - mailhog_data:/maildir
+    networks:
+      - syra-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: syra-pgadmin
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@syra.com.br
+      PGADMIN_DEFAULT_PASSWORD: admin
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - syra-network
+
+volumes:
+  postgres_data:
+    driver: local
+  mailhog_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  syra-network:
+    driver: bridge

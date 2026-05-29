@@ -1,0 +1,17 @@
+# ===== BACKEND =====
+syra-backend/target/
+syra-backend/src/main/resources/application-local.properties
+syra-backend/.env
+
+# ===== FRONTEND =====
+syra-frontend/node_modules/
+syra-frontend/dist/
+syra-frontend/.env
+
+# ===== INTELLIJ =====
+.idea/
+*.iml
+
+# ===== SISTEMA =====
+.DS_Store
+Thumbs.db
