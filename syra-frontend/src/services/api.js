@@ -129,3 +129,28 @@ export async function deleteService(id) {
   await api.delete(`/servicos/${id}`);
 }
 
+// --- PRODUTOS ---
+export async function fetchProducts() {
+  const { data } = await api.get('/produtos');
+  return Array.isArray(data) ? data : [];
+}
+
+export async function createProduct(formData) {
+  // O axios lida com o FormData, só precisamos avisar o cabeçalho
+  const { data } = await api.post('/produtos', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+export async function updateProduct(id, formData) {
+  const { data } = await api.put(`/produtos/${id}`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return data;
+}
+
+export async function deleteProduct(id) {
+  await api.delete(`/produtos/${id}`);
+}
+

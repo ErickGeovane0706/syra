@@ -21,7 +21,7 @@ export default function HomePage({
         <div className="hero-overlay" />
 
         <div className="site-shell hero-content hero-content-wide">
-          <span className="eyebrow">Syra Estética · Monteiro</span>
+          <span className="eyebrow">Syra Comésticos e Estética · Monteiro</span>
           <h1>Beleza, acolhimento e uma agenda inteligente pensada para o seu tempo.</h1>
           <p>
             Na Syra, cada atendimento nasce do cuidado. Você faz login, escolhe o serviço
@@ -35,6 +35,9 @@ export default function HomePage({
             </Link>
             <Link className="button button-secondary" to="/servicos">
               Explorar serviços
+            </Link>
+            <Link className="button button-secondary" to="/produtos">
+              Explorar produtos
             </Link>
             {!session ? (
               <button type="button" className="button button-secondary" onClick={onGoogleLogin}>
@@ -109,7 +112,7 @@ export default function HomePage({
               <span className="card-badge">02</span>
               <h3>Veja os horários livres</h3>
               <p>
-                O sistema cruza a duração do serviço com os horários de trabalho e
+                Em caso de consultas o sistema cruza a duração do serviço com os horários de trabalho e
                 agendamentos existentes, mostrando apenas encaixes válidos.
               </p>
             </article>

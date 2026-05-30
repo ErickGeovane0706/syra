@@ -26,14 +26,14 @@ export default function Footer({ isAdmin }) {
         <div>
           <h4>Contato</h4>
           <div className="footer-links">
-            <a href="https://wa.me/5583998317419" target="_blank" rel="noreferrer">
+            <a href="https://wa.me/5583999578716" target="_blank" rel="noreferrer">
               WhatsApp: 83 99831-7419
             </a>
-            <a href="mailto:valdilenehyuuga1@gmail.com">
-              valdilenehyuuga1@gmail.com
+            <a href="mailto:walquiriasousabarbosa@gmail.com">
+              walquiriasousabarbosa@gmail.com
             </a>
-            <a href="https://instagram.com/valdilene_hyuuga" target="_blank" rel="noreferrer">
-              Instagram: @valdilene_hyuuga
+            <a href="https://instagram.com/wal_cosmeticos2021" target="_blank" rel="noreferrer">
+              Instagram: @wal_cosmeticos2021
             </a>
             <span>Monteiro · Paraíba</span>
           </div>

@@ -202,12 +202,13 @@ h4 {
   font-weight: 700;
 }
 
-.hero-section {
+..hero-section {
   position: relative;
   min-height: calc(100vh - 82px);
   display: grid;
   align-items: center;
   overflow: hidden;
+  /* Pintamos o fundo com a cor bege do seu tema para disfarçar o vazio */
   background-color: var(--bg);
 }
 
