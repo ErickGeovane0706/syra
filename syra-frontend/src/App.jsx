@@ -200,9 +200,12 @@ export default function App() {
       setAuthBusy(false);
     }
   }
-
-  function handleGoogleLogin() {
+// Local
+ /* function handleGoogleLogin() {
     window.location.assign('/oauth2/authorization/google');
+  }*/
+  function handleGoogleLogin() {
+    window.location.assign('https://syra-vw69.onrender.com/oauth2/authorization/google');
   }
 
   function handleLogout() {
