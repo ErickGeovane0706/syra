@@ -64,7 +64,8 @@ export default function HomePage({
         <div className="site-shell split-section home-intro-grid">
           <div>
             <span className="eyebrow eyebrow-dark">Sobre a Syra</span>
-            <h2>Um refúgio onde o autocuidado desacelera o tempo e devolve sua confiança.</h2>
+            <h2>
+              Um refúgio onde o autocuidado desacelera o tempo e devolve sua confiança.</h2>
           </div>
 
           <div className="copy-block">
