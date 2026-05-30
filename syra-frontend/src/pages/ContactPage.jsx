@@ -16,14 +16,14 @@ export default function ContactPage({ schedules, loading, session }) {
         <div className="card contact-card">
           <h2>Informações</h2>
           <div className="contact-items">
-            <a href="https://wa.me/5583998317419" target="_blank" rel="noreferrer">
-              WhatsApp: 83 99831-7419
+            <a href="https://wa.me/5583999578716" target="_blank" rel="noreferrer">
+              WhatsApp: 83 399957-8716
             </a>
-            <a href="mailto:valdilenehyuuga1@gmail.com">
-              E-mail: valdilenehyuuga1@gmail.com
+            <a href="mailto:walquiriasousabarbosa@gmail.com">
+              E-mail: walquiriasousabarbosa@gmail.com
             </a>
-            <a href="https://instagram.com/valdilene_hyuuga" target="_blank" rel="noreferrer">
-              Instagram: @valdilene_hyuuga
+            <a href="https://instagram.com/wal_cosmeticos2021" target="_blank" rel="noreferrer">
+              Instagram: @wal_cosmeticos2021
             </a>
             <span>Cidade: Monteiro</span>
             <span>Estado: Paraíba</span>
