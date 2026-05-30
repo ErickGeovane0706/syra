@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { DAY_ORDER, buildWeeklyScheduleDraft, formatDay } from '../utils/scheduling';
-import { fetchAllAppointments, confirmAppointment, cancelAppointment } from '../services/api';
+import { fetchAllAppointments, confirmAppointment, cancelAppointment, createProduct } from '../services/api';
 
 const emptyServiceForm = { nome: '', descricao: '', preco: '', duracaoMinutos: '' };
+const emptyProductForm = { titulo: '', descricao: '', preco: '', estoque: '', imagem: null };
 
 function formatMoney(value) {
   return Number(value || 0).toLocaleString('pt-BR', {
@@ -37,21 +38,21 @@ function buildWhatsAppUrl(appt) {
   const phone = (appt.usuario?.telefone || '').replace(/\D/g, '');
   const fullPhone = phone.startsWith('55') ? phone : `55${phone}`;
   const msg = encodeURIComponent(
-    `Olá ${clientName}, seu ${serviceName} está confirmado para ${dateTime}. Syra Estética 💜`
+      `Olá ${clientName}, seu ${serviceName} está confirmado para ${dateTime}. Syra Estética 💜`
   );
   return `https://wa.me/${fullPhone}?text=${msg}`;
 }
 
 export default function AdminPage({
-  session,
-  schedules,
-  services,
-  onSaveSchedule,
-  onCreateService,
-  onUpdateService,
-  onDeleteService,
-  loading,
-}) {
+                                    session,
+                                    schedules,
+                                    services,
+                                    onSaveSchedule,
+                                    onCreateService,
+                                    onUpdateService,
+                                    onDeleteService,
+                                    loading,
+                                  }) {
   /* ── horários ── */
   const [drafts, setDrafts] = useState(() => buildWeeklyScheduleDraft(schedules));
   const [savingDay, setSavingDay] = useState('');
@@ -63,6 +64,11 @@ export default function AdminPage({
   const [savingService, setSavingService] = useState(false);
   const [deletingServiceId, setDeletingServiceId] = useState(null);
   const [serviceFeedback, setServiceFeedback] = useState({ type: '', message: '' });
+
+  /* ── produtos ── */
+  const [productForm, setProductForm] = useState(emptyProductForm);
+  const [savingProduct, setSavingProduct] = useState(false);
+  const [productFeedback, setProductFeedback] = useState({ type: '', message: '' });
 
   /* ── tab ── */
   const [activeTab, setActiveTab] = useState('horarios');
@@ -83,15 +89,15 @@ export default function AdminPage({
     let cancelled = false;
     setLoadingAppts(true);
     fetchAllAppointments()
-      .then((data) => { if (!cancelled) setAllAppointments(data); })
-      .catch(() => { if (!cancelled) setAllAppointments([]); })
-      .finally(() => { if (!cancelled) setLoadingAppts(false); });
+        .then((data) => { if (!cancelled) setAllAppointments(data); })
+        .catch(() => { if (!cancelled) setAllAppointments([]); })
+        .finally(() => { if (!cancelled) setLoadingAppts(false); });
     return () => { cancelled = true; };
   }, [activeTab]);
 
   const workingDays = useMemo(
-    () => schedules.filter((s) => s?.trabalhaNesseDia).length,
-    [schedules],
+      () => schedules.filter((s) => s?.trabalhaNesseDia).length,
+      [schedules],
   );
 
   /* ─── handlers horários ─── */
@@ -189,6 +195,52 @@ export default function AdminPage({
     }
   }
 
+  /* ─── handlers produtos ─── */
+  function handleProductChange(e) {
+    const { name, value, files } = e.target;
+    if (name === 'imagem') {
+      setProductForm((curr) => ({ ...curr, imagem: files[0] }));
+    } else {
+      setProductForm((curr) => ({ ...curr, [name]: value }));
+    }
+  }
+
+  async function handleProductSubmit(e) {
+    e.preventDefault();
+    setSavingProduct(true);
+    setProductFeedback({ type: '', message: '' });
+
+    const formData = new FormData();
+    formData.append('titulo', productForm.titulo);
+    formData.append('descricao', productForm.descricao);
+    formData.append('preco', productForm.preco);
+    formData.append('estoque', productForm.estoque);
+
+    // Anexa a imagem apenas se o utilizador tiver selecionado um ficheiro
+    if (productForm.imagem) {
+      formData.append('imagem', productForm.imagem);
+    }
+
+    try {
+      // Faz a requisição real à API para criar o produto!
+      await createProduct(formData);
+
+      setProductFeedback({ type: 'success', message: `Produto criado com sucesso!` });
+      setProductForm(emptyProductForm);
+
+      // Atualiza a página levemente para o novo produto aparecer na Loja
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+
+    } catch (error) {
+      console.error("Erro na API de Produtos:", error);
+      setProductFeedback({ type: 'error', message: 'Erro ao salvar produto no back-end. Verifique o terminal.' });
+    } finally {
+      setSavingProduct(false);
+    }
+  }
+
   /* ─── handlers agendamentos ─── */
   async function reloadAppointments() {
     try {
@@ -229,381 +281,438 @@ export default function AdminPage({
   }
 
   return (
-    <section className="page-section admin-page">
-      {/* ── Hero ── */}
-      <div className="site-shell page-hero">
-        <span className="eyebrow eyebrow-dark">Painel administrativo</span>
-        <h1>Gerencie horários e serviços do seu espaço.</h1>
-        <p>
-          Bem-vinda, {session?.nome || 'administradora'}. Configure os dias de atendimento,
-          cadastre serviços e deixe a agenda inteligente cuidar do resto.
-        </p>
-      </div>
-
-      {/* ── Métricas ── */}
-      <div className="site-shell card-grid three-columns admin-metrics">
-        <article className="card admin-metric-card">
-          <span className="card-badge">Dias ativos</span>
-          <strong>{workingDays}</strong>
-          <p>Dias da semana com atendimento liberado.</p>
-        </article>
-        <article className="card admin-metric-card">
-          <span className="card-badge">Serviços</span>
-          <strong>{services.length}</strong>
-          <p>Procedimentos cadastrados no sistema.</p>
-        </article>
-        <article className="card admin-metric-card">
-          <span className="card-badge">Intervalo de agenda</span>
-          <strong>15 min</strong>
-          <p>Intervalo entre sugestões de horário para o cliente.</p>
-        </article>
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className="site-shell">
-        <div className="admin-tabs">
-          <button
-            type="button"
-            className={`admin-tab ${activeTab === 'horarios' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('horarios')}
-          >
-            Horários de Atendimento
-          </button>
-          <button
-            type="button"
-            className={`admin-tab ${activeTab === 'servicos' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('servicos')}
-          >
-            Gerenciar Serviços
-          </button>
-          <button
-            type="button"
-            className={`admin-tab ${activeTab === 'agendamentos' ? 'admin-tab-active' : ''}`}
-            onClick={() => setActiveTab('agendamentos')}
-          >
-            Agendamentos
-          </button>
+      <section className="page-section admin-page">
+        {/* ── Hero ── */}
+        <div className="site-shell page-hero">
+          <span className="eyebrow eyebrow-dark">Painel administrativo</span>
+          <h1>Gerencie horários e serviços do seu espaço.</h1>
+          <p>
+            Bem-vinda, {session?.nome || 'administradora'}. Configure os dias de atendimento,
+            cadastre serviços e deixe a agenda inteligente cuidar do resto.
+          </p>
         </div>
-      </div>
 
-      {/* ══════════════════ TAB: HORÁRIOS ══════════════════ */}
-      {activeTab === 'horarios' && (
+        {/* ── Métricas ── */}
+        <div className="site-shell card-grid three-columns admin-metrics">
+          <article className="card admin-metric-card">
+            <span className="card-badge">Dias ativos</span>
+            <strong>{workingDays}</strong>
+            <p>Dias da semana com atendimento liberado.</p>
+          </article>
+          <article className="card admin-metric-card">
+            <span className="card-badge">Serviços</span>
+            <strong>{services.length}</strong>
+            <p>Procedimentos cadastrados no sistema.</p>
+          </article>
+          <article className="card admin-metric-card">
+            <span className="card-badge">Intervalo de agenda</span>
+            <strong>15 min</strong>
+            <p>Intervalo entre sugestões de horário para o cliente.</p>
+          </article>
+        </div>
+
+        {/* ── Tabs ── */}
         <div className="site-shell">
-          <div className="section-head admin-section-head">
-            <div>
-              <span className="eyebrow eyebrow-dark">Horários semanais</span>
-              <h2>Configure cada dia</h2>
-            </div>
-            {loading ? <span className="status-pill">Atualizando dados...</span> : null}
-          </div>
-
-          {feedback.message ? (
-            <div className={`feedback feedback-${feedback.type}`}>{feedback.message}</div>
-          ) : null}
-
-          <div className="card-grid two-columns admin-schedule-grid">
-            {DAY_ORDER.map((day) => {
-              const draft = drafts[day];
-              const disabled = savingDay === day;
-
-              return (
-                <article key={day} className="card admin-day-card">
-                  <div className="admin-day-head">
-                    <div>
-                      <span className="card-badge">{formatDay(day)}</span>
-                      <h3>{draft.trabalhaNesseDia ? 'Atendimento ativo' : 'Dia fechado'}</h3>
-                    </div>
-                    <label className="switch-field">
-                      <input
-                        type="checkbox"
-                        checked={Boolean(draft.trabalhaNesseDia)}
-                        onChange={(e) => handleChange(day, 'trabalhaNesseDia', e.target.checked)}
-                      />
-                      <span>{draft.trabalhaNesseDia ? 'Aberto' : 'Fechado'}</span>
-                    </label>
-                  </div>
-
-                  <div className="form-grid admin-form-grid">
-                    <label>
-                      <span>Abertura</span>
-                      <input
-                        type="time"
-                        value={draft.horaAbertura}
-                        onChange={(e) => handleChange(day, 'horaAbertura', e.target.value)}
-                        disabled={!draft.trabalhaNesseDia}
-                      />
-                    </label>
-                    <label>
-                      <span>Fechamento</span>
-                      <input
-                        type="time"
-                        value={draft.horaFechamento}
-                        onChange={(e) => handleChange(day, 'horaFechamento', e.target.value)}
-                        disabled={!draft.trabalhaNesseDia}
-                      />
-                    </label>
-                    <label>
-                      <span>Início do almoço</span>
-                      <input
-                        type="time"
-                        value={draft.horaInicioAlmoco}
-                        onChange={(e) => handleChange(day, 'horaInicioAlmoco', e.target.value)}
-                        disabled={!draft.trabalhaNesseDia}
-                      />
-                    </label>
-                    <label>
-                      <span>Fim do almoço</span>
-                      <input
-                        type="time"
-                        value={draft.horaFimAlmoco}
-                        onChange={(e) => handleChange(day, 'horaFimAlmoco', e.target.value)}
-                        disabled={!draft.trabalhaNesseDia}
-                      />
-                    </label>
-                  </div>
-
-                  <button
-                    type="button"
-                    className="button button-primary"
-                    onClick={() => handleSave(day)}
-                    disabled={disabled}
-                  >
-                    {disabled ? 'Salvando...' : 'Salvar dia'}
-                  </button>
-                </article>
-              );
-            })}
+          <div className="admin-tabs">
+            <button
+                type="button"
+                className={`admin-tab ${activeTab === 'horarios' ? 'admin-tab-active' : ''}`}
+                onClick={() => setActiveTab('horarios')}
+            >
+              Horários de Atendimento
+            </button>
+            <button
+                type="button"
+                className={`admin-tab ${activeTab === 'servicos' ? 'admin-tab-active' : ''}`}
+                onClick={() => setActiveTab('servicos')}
+            >
+              Gerenciar Serviços
+            </button>
+            <button
+                type="button"
+                className={`admin-tab ${activeTab === 'produtos' ? 'admin-tab-active' : ''}`}
+                onClick={() => setActiveTab('produtos')}
+            >
+              Loja / Produtos
+            </button>
+            <button
+                type="button"
+                className={`admin-tab ${activeTab === 'agendamentos' ? 'admin-tab-active' : ''}`}
+                onClick={() => setActiveTab('agendamentos')}
+            >
+              Agendamentos
+            </button>
           </div>
         </div>
-      )}
 
-      {/* ══════════════════ TAB: SERVIÇOS ══════════════════ */}
-      {activeTab === 'servicos' && (
-        <div className="site-shell">
-          <div className="section-head admin-section-head">
-            <div>
-              <span className="eyebrow eyebrow-dark">Catálogo</span>
-              <h2>{editingServiceId ? 'Editar serviço' : 'Cadastrar novo serviço'}</h2>
-            </div>
-            {loading ? <span className="status-pill">Atualizando dados...</span> : null}
-          </div>
+        {/* ══════════════════ TAB: HORÁRIOS ══════════════════ */}
+        {activeTab === 'horarios' && (
+            <div className="site-shell">
+              <div className="section-head admin-section-head">
+                <div>
+                  <span className="eyebrow eyebrow-dark">Horários semanais</span>
+                  <h2>Configure cada dia</h2>
+                </div>
+                {loading ? <span className="status-pill">Atualizando dados...</span> : null}
+              </div>
 
-          {serviceFeedback.message ? (
-            <div className={`feedback feedback-${serviceFeedback.type}`}>
-              {serviceFeedback.message}
-            </div>
-          ) : null}
-
-          {/* Formulário de criação / edição */}
-          <form className="card admin-service-form" onSubmit={handleServiceSubmit}>
-            <div className="form-grid">
-              <label>
-                <span>Nome do serviço</span>
-                <input
-                  name="nome"
-                  value={serviceForm.nome}
-                  onChange={handleServiceFormChange}
-                  placeholder="Ex: Limpeza de pele"
-                  required
-                />
-              </label>
-
-              <label>
-                <span>Descrição</span>
-                <input
-                  name="descricao"
-                  value={serviceForm.descricao}
-                  onChange={handleServiceFormChange}
-                  placeholder="Breve descrição do procedimento"
-                />
-              </label>
-
-              <label>
-                <span>Valor (R$)</span>
-                <input
-                  name="preco"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={serviceForm.preco}
-                  onChange={handleServiceFormChange}
-                  placeholder="120.00"
-                  required
-                />
-              </label>
-
-              <label>
-                <span>Duração (minutos)</span>
-                <input
-                  name="duracaoMinutos"
-                  type="number"
-                  min="1"
-                  value={serviceForm.duracaoMinutos}
-                  onChange={handleServiceFormChange}
-                  placeholder="60"
-                  required
-                />
-              </label>
-            </div>
-
-            <div className="admin-service-actions">
-              <button
-                type="submit"
-                className="button button-primary"
-                disabled={savingService}
-              >
-                {savingService
-                  ? 'Salvando...'
-                  : editingServiceId
-                    ? 'Atualizar serviço'
-                    : 'Criar serviço'}
-              </button>
-              {editingServiceId ? (
-                <button
-                  type="button"
-                  className="button ghost-button"
-                  onClick={cancelEditService}
-                >
-                  Cancelar edição
-                </button>
+              {feedback.message ? (
+                  <div className={`feedback feedback-${feedback.type}`}>{feedback.message}</div>
               ) : null}
+
+              <div className="card-grid two-columns admin-schedule-grid">
+                {DAY_ORDER.map((day) => {
+                  const draft = drafts[day];
+                  const disabled = savingDay === day;
+
+                  return (
+                      <article key={day} className="card admin-day-card">
+                        <div className="admin-day-head">
+                          <div>
+                            <span className="card-badge">{formatDay(day)}</span>
+                            <h3>{draft.trabalhaNesseDia ? 'Atendimento ativo' : 'Dia fechado'}</h3>
+                          </div>
+                          <label className="switch-field">
+                            <input
+                                type="checkbox"
+                                checked={Boolean(draft.trabalhaNesseDia)}
+                                onChange={(e) => handleChange(day, 'trabalhaNesseDia', e.target.checked)}
+                            />
+                            <span>{draft.trabalhaNesseDia ? 'Aberto' : 'Fechado'}</span>
+                          </label>
+                        </div>
+
+                        <div className="form-grid admin-form-grid">
+                          <label>
+                            <span>Abertura</span>
+                            <input
+                                type="time"
+                                value={draft.horaAbertura}
+                                onChange={(e) => handleChange(day, 'horaAbertura', e.target.value)}
+                                disabled={!draft.trabalhaNesseDia}
+                            />
+                          </label>
+                          <label>
+                            <span>Fechamento</span>
+                            <input
+                                type="time"
+                                value={draft.horaFechamento}
+                                onChange={(e) => handleChange(day, 'horaFechamento', e.target.value)}
+                                disabled={!draft.trabalhaNesseDia}
+                            />
+                          </label>
+                          <label>
+                            <span>Início do almoço</span>
+                            <input
+                                type="time"
+                                value={draft.horaInicioAlmoco}
+                                onChange={(e) => handleChange(day, 'horaInicioAlmoco', e.target.value)}
+                                disabled={!draft.trabalhaNesseDia}
+                            />
+                          </label>
+                          <label>
+                            <span>Fim do almoço</span>
+                            <input
+                                type="time"
+                                value={draft.horaFimAlmoco}
+                                onChange={(e) => handleChange(day, 'horaFimAlmoco', e.target.value)}
+                                disabled={!draft.trabalhaNesseDia}
+                            />
+                          </label>
+                        </div>
+
+                        <button
+                            type="button"
+                            className="button button-primary"
+                            onClick={() => handleSave(day)}
+                            disabled={disabled}
+                        >
+                          {disabled ? 'Salvando...' : 'Salvar dia'}
+                        </button>
+                      </article>
+                  );
+                })}
+              </div>
             </div>
-          </form>
+        )}
 
-          {/* Lista de serviços existentes */}
-          <div className="admin-service-list-head">
-            <h3>Serviços cadastrados ({services.length})</h3>
-          </div>
+        {/* ══════════════════ TAB: SERVIÇOS ══════════════════ */}
+        {activeTab === 'servicos' && (
+            <div className="site-shell">
+              <div className="section-head admin-section-head">
+                <div>
+                  <span className="eyebrow eyebrow-dark">Catálogo</span>
+                  <h2>{editingServiceId ? 'Editar serviço' : 'Cadastrar novo serviço'}</h2>
+                </div>
+                {loading ? <span className="status-pill">Atualizando dados...</span> : null}
+              </div>
 
-          {services.length > 0 ? (
-            <div className="card-grid two-columns admin-service-grid">
-              {services.map((service) => (
-                <article key={service.id} className="card admin-service-card">
-                  <div className="admin-service-card-info">
-                    <span className="card-badge">Serviço</span>
-                    <h3>{service.nome}</h3>
-                    {service.descricao ? <p>{service.descricao}</p> : null}
-                    <div className="service-meta">
-                      <strong>{formatMoney(service.preco)}</strong>
-                      <span>{service.duracaoMinutos} min</span>
-                    </div>
+              {serviceFeedback.message ? (
+                  <div className={`feedback feedback-${serviceFeedback.type}`}>
+                    {serviceFeedback.message}
                   </div>
-                  <div className="admin-service-card-actions">
-                    <button
-                      type="button"
-                      className="button button-primary button-sm"
-                      onClick={() => startEditService(service)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      className="button button-danger button-sm"
-                      onClick={() => handleDeleteService(service)}
-                      disabled={deletingServiceId === service.id}
-                    >
-                      {deletingServiceId === service.id ? 'Excluindo...' : 'Excluir'}
-                    </button>
-                  </div>
-                </article>
-              ))}
-            </div>
-          ) : (
-            <div className="status-card">Nenhum serviço cadastrado ainda.</div>
-          )}
-        </div>
-      )}
+              ) : null}
 
-      {/* ══════════════════ TAB: AGENDAMENTOS ══════════════════ */}
-      {activeTab === 'agendamentos' && (
-        <div className="site-shell">
-          <div className="section-head admin-section-head">
-            <div>
-              <span className="eyebrow eyebrow-dark">Agenda</span>
-              <h2>Todos os agendamentos</h2>
-            </div>
-            {loadingAppts ? <span className="status-pill">Carregando...</span> : null}
-          </div>
+              {/* Formulário de criação / edição */}
+              <form className="card admin-service-form" onSubmit={handleServiceSubmit}>
+                <div className="form-grid">
+                  <label>
+                    <span>Nome do serviço</span>
+                    <input
+                        name="nome"
+                        value={serviceForm.nome}
+                        onChange={handleServiceFormChange}
+                        placeholder="Ex: Limpeza de pele"
+                        required
+                    />
+                  </label>
 
-          {apptFeedback.message ? (
-            <div className={`feedback feedback-${apptFeedback.type}`}>{apptFeedback.message}</div>
-          ) : null}
+                  <label>
+                    <span>Descrição</span>
+                    <input
+                        name="descricao"
+                        value={serviceForm.descricao}
+                        onChange={handleServiceFormChange}
+                        placeholder="Breve descrição do procedimento"
+                    />
+                  </label>
 
-          {!loadingAppts && allAppointments.length === 0 ? (
-            <div className="status-card">Nenhum agendamento encontrado.</div>
-          ) : !loadingAppts ? (
-            <div className="card-grid two-columns appt-grid">
-              {allAppointments.map((appt) => {
-                const isCancelled = String(appt.status).toUpperCase() === 'CANCELADO';
-                const isPending = String(appt.status).toUpperCase() === 'PENDENTE';
-                const hasPhone = Boolean(appt.usuario?.telefone);
+                  <label>
+                    <span>Valor (R$)</span>
+                    <input
+                        name="preco"
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={serviceForm.preco}
+                        onChange={handleServiceFormChange}
+                        placeholder="120.00"
+                        required
+                    />
+                  </label>
 
-                return (
-                  <article
-                    key={appt.id}
-                    className={`card appt-card ${isCancelled ? 'appt-card-cancelled' : ''}`}
+                  <label>
+                    <span>Duração (minutos)</span>
+                    <input
+                        name="duracaoMinutos"
+                        type="number"
+                        min="1"
+                        value={serviceForm.duracaoMinutos}
+                        onChange={handleServiceFormChange}
+                        placeholder="60"
+                        required
+                    />
+                  </label>
+                </div>
+
+                <div className="admin-service-actions">
+                  <button
+                      type="submit"
+                      className="button button-primary"
+                      disabled={savingService}
                   >
-                    <div className="appt-card-top">
+                    {savingService
+                        ? 'Salvando...'
+                        : editingServiceId
+                            ? 'Atualizar serviço'
+                            : 'Criar serviço'}
+                  </button>
+                  {editingServiceId ? (
+                      <button
+                          type="button"
+                          className="button ghost-button"
+                          onClick={cancelEditService}
+                      >
+                        Cancelar edição
+                      </button>
+                  ) : null}
+                </div>
+              </form>
+
+              {/* Lista de serviços existentes */}
+              <div className="admin-service-list-head">
+                <h3>Serviços cadastrados ({services.length})</h3>
+              </div>
+
+              {services.length > 0 ? (
+                  <div className="card-grid two-columns admin-service-grid">
+                    {services.map((service) => (
+                        <article key={service.id} className="card admin-service-card">
+                          <div className="admin-service-card-info">
+                            <span className="card-badge">Serviço</span>
+                            <h3>{service.nome}</h3>
+                            {service.descricao ? <p>{service.descricao}</p> : null}
+                            <div className="service-meta">
+                              <strong>{formatMoney(service.preco)}</strong>
+                              <span>{service.duracaoMinutos} min</span>
+                            </div>
+                          </div>
+                          <div className="admin-service-card-actions">
+                            <button
+                                type="button"
+                                className="button button-primary button-sm"
+                                onClick={() => startEditService(service)}
+                            >
+                              Editar
+                            </button>
+                            <button
+                                type="button"
+                                className="button button-danger button-sm"
+                                onClick={() => handleDeleteService(service)}
+                                disabled={deletingServiceId === service.id}
+                            >
+                              {deletingServiceId === service.id ? 'Excluindo...' : 'Excluir'}
+                            </button>
+                          </div>
+                        </article>
+                    ))}
+                  </div>
+              ) : (
+                  <div className="status-card">Nenhum serviço cadastrado ainda.</div>
+              )}
+            </div>
+        )}
+
+        {/* ══════════════════ TAB: PRODUTOS ══════════════════ */}
+        {activeTab === 'produtos' && (
+            <div className="site-shell">
+              <div className="section-head admin-section-head">
+                <div>
+                  <span className="eyebrow eyebrow-dark">Loja Online</span>
+                  <h2>Cadastrar novo produto</h2>
+                </div>
+              </div>
+
+              {productFeedback.message ? (
+                  <div className={`feedback feedback-${productFeedback.type}`}>
+                    {productFeedback.message}
+                  </div>
+              ) : null}
+
+              <form className="card admin-service-form" onSubmit={handleProductSubmit}>
+                <div className="form-grid">
+                  <label>
+                    <span>Título</span>
+                    <input name="titulo" value={productForm.titulo} onChange={handleProductChange} required />
+                  </label>
+                  <label>
+                    <span>Preço (R$)</span>
+                    <input name="preco" type="number" step="0.01" value={productForm.preco} onChange={handleProductChange} required />
+                  </label>
+                  <label>
+                    <span>Estoque</span>
+                    <input name="estoque" type="number" value={productForm.estoque} onChange={handleProductChange} required />
+                  </label>
+                  <label>
+                    <span>Imagem (Upload)</span>
+                    <input name="imagem" type="file" accept="image/*" onChange={handleProductChange} />
+                  </label>
+                  <label className="field-full">
+                    <span>Descrição</span>
+                    <textarea name="descricao" value={productForm.descricao} onChange={handleProductChange} rows="3" />
+                  </label>
+                </div>
+                <button
+                    type="submit"
+                    className="button button-primary"
+                    style={{marginTop: '16px'}}
+                    disabled={savingProduct}
+                >
+                  {savingProduct ? 'Salvando...' : 'Criar Produto'}
+                </button>
+              </form>
+            </div>
+        )}
+
+        {/* ══════════════════ TAB: AGENDAMENTOS ══════════════════ */}
+        {activeTab === 'agendamentos' && (
+            <div className="site-shell">
+              <div className="section-head admin-section-head">
+                <div>
+                  <span className="eyebrow eyebrow-dark">Agenda</span>
+                  <h2>Todos os agendamentos</h2>
+                </div>
+                {loadingAppts ? <span className="status-pill">Carregando...</span> : null}
+              </div>
+
+              {apptFeedback.message ? (
+                  <div className={`feedback feedback-${apptFeedback.type}`}>{apptFeedback.message}</div>
+              ) : null}
+
+              {!loadingAppts && allAppointments.length === 0 ? (
+                  <div className="status-card">Nenhum agendamento encontrado.</div>
+              ) : !loadingAppts ? (
+                  <div className="card-grid two-columns appt-grid">
+                    {allAppointments.map((appt) => {
+                      const isCancelled = String(appt.status).toUpperCase() === 'CANCELADO';
+                      const isPending = String(appt.status).toUpperCase() === 'PENDENTE';
+                      const hasPhone = Boolean(appt.usuario?.telefone);
+
+                      return (
+                          <article
+                              key={appt.id}
+                              className={`card appt-card ${isCancelled ? 'appt-card-cancelled' : ''}`}
+                          >
+                            <div className="appt-card-top">
                       <span className={`appt-status ${statusClass(appt.status)}`}>
                         {statusLabel(appt.status)}
                       </span>
-                      <span className="card-badge">{appt.servico?.nome || 'Serviço'}</span>
-                    </div>
+                              <span className="card-badge">{appt.servico?.nome || 'Serviço'}</span>
+                            </div>
 
-                    <div className="appt-card-details">
-                      <div><strong>Cliente</strong><span>{appt.usuario?.nome || '—'}</span></div>
-                      <div><strong>Telefone</strong><span>{appt.usuario?.telefone || 'Não informado'}</span></div>
-                      <div><strong>Data</strong><span>{formatDateTime(appt.dataHoraInicio)}</span></div>
-                      <div><strong>Término</strong><span>{formatDateTime(appt.dataHoraFim)}</span></div>
-                      <div><strong>Valor</strong><span>{formatMoney(appt.servico?.preco)}</span></div>
-                    </div>
+                            <div className="appt-card-details">
+                              <div><strong>Cliente</strong><span>{appt.usuario?.nome || '—'}</span></div>
+                              <div><strong>Telefone</strong><span>{appt.usuario?.telefone || 'Não informado'}</span></div>
+                              <div><strong>Data</strong><span>{formatDateTime(appt.dataHoraInicio)}</span></div>
+                              <div><strong>Término</strong><span>{formatDateTime(appt.dataHoraFim)}</span></div>
+                              <div><strong>Valor</strong><span>{formatMoney(appt.servico?.preco)}</span></div>
+                            </div>
 
-                    {appt.observacoes ? (
-                      <p className="appt-obs">Obs: {appt.observacoes}</p>
-                    ) : null}
+                            {appt.observacoes ? (
+                                <p className="appt-obs">Obs: {appt.observacoes}</p>
+                            ) : null}
 
-                    <div className="appt-card-actions">
-                      {hasPhone && !isCancelled ? (
-                        <a
-                          href={buildWhatsAppUrl(appt)}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="button button-whatsapp button-sm"
-                        >
-                          WhatsApp
-                        </a>
-                      ) : null}
+                            <div className="appt-card-actions">
+                              {hasPhone && !isCancelled ? (
+                                  <a
+                                      href={buildWhatsAppUrl(appt)}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="button button-whatsapp button-sm"
+                                  >
+                                    WhatsApp
+                                  </a>
+                              ) : null}
 
-                      {isPending ? (
-                        <button
-                          type="button"
-                          className="button button-primary button-sm"
-                          onClick={() => handleConfirmAppt(appt)}
-                          disabled={apptActionId === appt.id}
-                        >
-                          {apptActionId === appt.id ? '...' : 'Confirmar'}
-                        </button>
-                      ) : null}
+                              {isPending ? (
+                                  <button
+                                      type="button"
+                                      className="button button-primary button-sm"
+                                      onClick={() => handleConfirmAppt(appt)}
+                                      disabled={apptActionId === appt.id}
+                                  >
+                                    {apptActionId === appt.id ? '...' : 'Confirmar'}
+                                  </button>
+                              ) : null}
 
-                      {!isCancelled ? (
-                        <button
-                          type="button"
-                          className="button button-danger button-sm"
-                          onClick={() => handleCancelAppt(appt)}
-                          disabled={apptActionId === appt.id}
-                        >
-                          {apptActionId === appt.id ? '...' : 'Cancelar'}
-                        </button>
-                      ) : null}
-                    </div>
-                  </article>
-                );
-              })}
+                              {!isCancelled ? (
+                                  <button
+                                      type="button"
+                                      className="button button-danger button-sm"
+                                      onClick={() => handleCancelAppt(appt)}
+                                      disabled={apptActionId === appt.id}
+                                  >
+                                    {apptActionId === appt.id ? '...' : 'Cancelar'}
+                                  </button>
+                              ) : null}
+                            </div>
+                          </article>
+                      );
+                    })}
+                  </div>
+              ) : null}
             </div>
-          ) : null}
-        </div>
-      )}
-    </section>
+        )}
+      </section>
   );
 }
-

@@ -202,12 +202,14 @@ h4 {
   font-weight: 700;
 }
 
-.hero-section {
+..hero-section {
   position: relative;
   min-height: calc(100vh - 82px);
   display: grid;
   align-items: center;
   overflow: hidden;
+  /* Pintamos o fundo com a cor bege do seu tema para disfarçar o vazio */
+  background-color: var(--bg);
 }
 
 .hero-image,
@@ -219,8 +221,9 @@ h4 {
 .hero-image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  object-position: center 35%;
+  /* Volta para o contain para garantir o corpo 100% visível sem cortes */
+  object-fit: contain;
+  object-position: center;
 }
 
 .hero-overlay {

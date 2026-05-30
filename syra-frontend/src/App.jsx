@@ -10,9 +10,11 @@ import ContactPage from './pages/ContactPage';
 import AdminPage from './pages/AdminPage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import NotFoundPage from './pages/NotFoundPage';
+import ProductsPage from './pages/ProductsPage';
 import {
   fetchSchedules,
   fetchServices,
+  fetchProducts,
   fetchUsersByRole,
   findOrCreateUser,
   loginDevelopmentUser,
@@ -54,7 +56,6 @@ function readSessionFromUrl() {
 
   const token = params.get('token');
   if (token) {
-    // Salvar o token no localStorage para uso futuro
     window.localStorage.setItem('syra.token', token);
   }
 
@@ -74,29 +75,29 @@ function clearSessionParamsFromUrl() {
 
 function AccessNotice({ session, onGoogleLogin, onOpenAuth }) {
   return (
-    <section className="page-section">
-      <div className="site-shell card not-found-card auth-required-card">
-        <span className="eyebrow eyebrow-dark">Acesso restrito</span>
-        <h1>{session ? 'Seu perfil não tem acesso ao painel admin.' : 'Faça login para continuar.'}</h1>
-        <p>
-          {session
-            ? 'Somente os e-mails cadastrados como ADMIN no backend podem editar a agenda de trabalho.'
-            : 'Use o login Google para identificar o perfil corretamente. Enquanto o retorno OAuth do backend não volta ao frontend, o acesso local de desenvolvimento continua disponível.'}
-        </p>
-        <div className="hero-actions">
-          {!session ? (
-            <>
-              <button type="button" className="button button-primary" onClick={onGoogleLogin}>
-                Entrar com Google
-              </button>
-              <button type="button" className="button button-secondary" onClick={onOpenAuth}>
-                Acesso local
-              </button>
-            </>
-          ) : null}
+      <section className="page-section">
+        <div className="site-shell card not-found-card auth-required-card">
+          <span className="eyebrow eyebrow-dark">Acesso restrito</span>
+          <h1>{session ? 'Seu perfil não tem acesso ao painel admin.' : 'Faça login para continuar.'}</h1>
+          <p>
+            {session
+                ? 'Somente os e-mails cadastrados como ADMIN no backend podem editar a agenda de trabalho.'
+                : 'Use o login Google para identificar o perfil corretamente. Enquanto o retorno OAuth do backend não volta ao frontend, o acesso local de desenvolvimento continua disponível.'}
+          </p>
+          <div className="hero-actions">
+            {!session ? (
+                <>
+                  <button type="button" className="button button-primary" onClick={onGoogleLogin}>
+                    Entrar com Google
+                  </button>
+                  <button type="button" className="button button-secondary" onClick={onOpenAuth}>
+                    Acesso local
+                  </button>
+                </>
+            ) : null}
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
   );
 }
 
@@ -104,6 +105,7 @@ export default function App() {
   const [services, setServices] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [admins, setAdmins] = useState([]);
+  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [session, setSession] = useState(() => loadStoredSession());
@@ -116,15 +118,17 @@ export default function App() {
     setError('');
 
     try {
-      const [servicesData, schedulesData, adminsData] = await Promise.all([
+      const [servicesData, schedulesData, adminsData, productsData] = await Promise.all([
         fetchServices(),
         fetchSchedules(),
         fetchUsersByRole('ADMIN').catch(() => []),
+        fetchProducts().catch(() => [])
       ]);
 
       setServices(servicesData);
       setSchedules(schedulesData);
       setAdmins(Array.isArray(adminsData) ? adminsData : []);
+      setProducts(productsData || []);
     } catch (err) {
       const apiMessage = err?.response?.data?.message;
       setError(apiMessage || 'Não foi possível carregar os dados do sistema.');
@@ -157,9 +161,9 @@ export default function App() {
     if (!session?.email) return false;
 
     const adminEmails = new Set(
-      admins
-        .map((admin) => String(admin?.email || '').trim().toLowerCase())
-        .filter(Boolean),
+        admins
+            .map((admin) => String(admin?.email || '').trim().toLowerCase())
+            .filter(Boolean),
     );
 
     return session.role?.toUpperCase() === 'ADMIN' || adminEmails.has(session.email.toLowerCase());
@@ -239,103 +243,106 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
-      <Header
-        session={session}
-        isAdmin={isAdmin}
-        authBusy={authBusy}
-        onGoogleLogin={handleGoogleLogin}
-        onOpenAuth={() => setAuthModalOpen(true)}
-        onLogout={handleLogout}
-      />
-
-      {error ? (
-        <div className="site-shell global-alert" role="alert">
-          {error}
-        </div>
-      ) : null}
-
-      {authError ? (
-        <div className="site-shell global-alert" role="alert">
-          {authError}
-        </div>
-      ) : null}
-
-      <Routes>
-        <Route
-          path="/"
-          element={
-            <HomePage
-              services={services}
-              schedules={schedules}
-              loading={loading}
-              session={session}
-              onGoogleLogin={handleGoogleLogin}
-              onOpenAuth={() => setAuthModalOpen(true)}
-            />
-          }
+      <div className="app-shell">
+        <Header
+            session={session}
+            isAdmin={isAdmin}
+            authBusy={authBusy}
+            onGoogleLogin={handleGoogleLogin}
+            onOpenAuth={() => setAuthModalOpen(true)}
+            onLogout={handleLogout}
         />
-        <Route path="/servicos" element={<ServicesPage services={services} loading={loading} />} />
-        <Route
-          path="/agendar"
-          element={
-            <BookingPage
-              services={services}
-              schedules={schedules}
-              session={session}
-              onGoogleLogin={handleGoogleLogin}
-              onSessionUpdate={handleSessionUpdate}
-            />
-          }
-        />
-        <Route
-          path="/contato"
-          element={<ContactPage schedules={schedules} loading={loading} session={session} />}
-        />
-        <Route
-          path="/meus-agendamentos"
-          element={
-            <MyAppointmentsPage
-              session={session}
-              onGoogleLogin={handleGoogleLogin}
-            />
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            isAdmin ? (
-              <AdminPage
-                session={session}
-                schedules={schedules}
-                services={services}
-                onSaveSchedule={handleSaveSchedule}
-                onCreateService={handleCreateService}
-                onUpdateService={handleUpdateService}
-                onDeleteService={handleDeleteService}
-                loading={loading}
-              />
-            ) : (
-              <AccessNotice
-                session={session}
-                onGoogleLogin={handleGoogleLogin}
-                onOpenAuth={() => setAuthModalOpen(true)}
-              />
-            )
-          }
-        />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
 
-      <Footer isAdmin={isAdmin} />
+        {error ? (
+            <div className="site-shell global-alert" role="alert">
+              {error}
+            </div>
+        ) : null}
 
-      <AuthModal
-        open={authModalOpen}
-        submitting={authBusy}
-        error={authError}
-        onClose={() => setAuthModalOpen(false)}
-        onSubmit={handleDevelopmentLogin}
-      />
-    </div>
+        {authError ? (
+            <div className="site-shell global-alert" role="alert">
+              {authError}
+            </div>
+        ) : null}
+
+        <Routes>
+          <Route
+              path="/"
+              element={
+                <HomePage
+                    services={services}
+                    schedules={schedules}
+                    loading={loading}
+                    session={session}
+                    onGoogleLogin={handleGoogleLogin}
+                    onOpenAuth={() => setAuthModalOpen(true)}
+                />
+              }
+          />
+          <Route path="/servicos" element={<ServicesPage services={services} loading={loading} />} />
+
+          <Route path="/produtos" element={<ProductsPage products={products} loading={loading} />} />
+
+          <Route
+              path="/agendar"
+              element={
+                <BookingPage
+                    services={services}
+                    schedules={schedules}
+                    session={session}
+                    onGoogleLogin={handleGoogleLogin}
+                    onSessionUpdate={handleSessionUpdate}
+                />
+              }
+          />
+          <Route
+              path="/contato"
+              element={<ContactPage schedules={schedules} loading={loading} session={session} />}
+          />
+          <Route
+              path="/meus-agendamentos"
+              element={
+                <MyAppointmentsPage
+                    session={session}
+                    onGoogleLogin={handleGoogleLogin}
+                />
+              }
+          />
+          <Route
+              path="/admin"
+              element={
+                isAdmin ? (
+                    <AdminPage
+                        session={session}
+                        schedules={schedules}
+                        services={services}
+                        onSaveSchedule={handleSaveSchedule}
+                        onCreateService={handleCreateService}
+                        onUpdateService={handleUpdateService}
+                        onDeleteService={handleDeleteService}
+                        loading={loading}
+                    />
+                ) : (
+                    <AccessNotice
+                        session={session}
+                        onGoogleLogin={handleGoogleLogin}
+                        onOpenAuth={() => setAuthModalOpen(true)}
+                    />
+                )
+              }
+          />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+
+        <Footer isAdmin={isAdmin} />
+
+        <AuthModal
+            open={authModalOpen}
+            submitting={authBusy}
+            error={authError}
+            onClose={() => setAuthModalOpen(false)}
+            onSubmit={handleDevelopmentLogin}
+        />
+      </div>
   );
 }
