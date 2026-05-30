@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 export const api = axios.create({
-  baseURL: '/api',
+  // Tenta pegar a URL da nuvem, se não achar, usa o /api como fallback (reserva)
+  baseURL: import.meta.env.VITE_API_URL || '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -10,16 +11,16 @@ export const api = axios.create({
 
 // Interceptor para adicionar o token JWT em todas as requisições
 api.interceptors.request.use(
-  (config) => {
-    const token = window.localStorage.getItem('syra.token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    (config) => {
+      const token = window.localStorage.getItem('syra.token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => {
+      return Promise.reject(error);
     }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
 );
 
 export async function fetchServices() {
