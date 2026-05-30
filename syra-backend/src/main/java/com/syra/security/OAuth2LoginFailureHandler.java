@@ -24,9 +24,10 @@ public class OAuth2LoginFailureHandler extends SimpleUrlAuthenticationFailureHan
 
         // Redirecionar para o frontend com mensagem de erro
         String errorMessage = URLEncoder.encode("Falha na autenticação OAuth2. Tente novamente.", StandardCharsets.UTF_8);
-        String redirectUrl = "http://localhost:5173?error=" + errorMessage;
+
+        // URL DA VERCEL AQUI
+        String redirectUrl = "https://syra-frontend.vercel.app?error=" + errorMessage;
 
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }
-

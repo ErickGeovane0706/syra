@@ -38,8 +38,8 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         // Gerar token JWT
         String token = jwtUtil.generateToken(usuario.getEmail(), new java.util.HashMap<>());
 
-        // Redirecionar para o frontend com os dados do usuário
-        String redirectUrl = UriComponentsBuilder.fromUriString("http://localhost:5173")
+        // Redirecionar para o frontend com os dados do usuário usando a URL DA VERCEL
+        String redirectUrl = UriComponentsBuilder.fromUriString("https://syra-frontend.vercel.app")
                 .queryParam("email", email)
                 .queryParam("nome", URLEncoder.encode(nome != null ? nome : "", StandardCharsets.UTF_8))
                 .queryParam("foto", URLEncoder.encode(fotoUrl != null ? fotoUrl : "", StandardCharsets.UTF_8))
@@ -51,4 +51,3 @@ public class OAuth2LoginSuccessHandler extends SimpleUrlAuthenticationSuccessHan
         getRedirectStrategy().sendRedirect(request, response, redirectUrl);
     }
 }
-
