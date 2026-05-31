@@ -1194,64 +1194,74 @@ textarea:focus {
     padding: 56px 0;
   }
 }
-/* --- INÍCIO DOS AJUSTES PARA CELULAR --- */
+/* --- INÍCIO DO CABEÇALHO RESPONSIVO CIRÚRGICO --- */
 
 /* Quando a tela for menor ou igual a 768px (Mobile Portrait) */
 @media (max-width: 768px) {
 
-  /* 1. Ajuste do Container Principal do Cabeçalho */
-  /* Assume que seu header tem a classe .main-header ou similar */
-  .main-header {
-    flex-direction: column; /* Empilha os itens verticalmente (Logo, Nav, Foto) */
-    height: auto; /* Permite que o header cresça em altura para caber tudo */
-    padding: 15px; /* Dá um espacinho interno */
-    align-items: center; /* Centraliza logo, menu e foto */
+  /* 1. Ajuste do Container Principal do Cabeçalho (nav-shell) */
+  /* Empilha Marca, Menu e Ações verticalmente e centraliza */
+  .site-header .nav-shell {
+    flex-direction: column; /* Empilha: Logo, Nav, Ações */
+    height: auto; /* Permite que o cabeçalho cresça verticalmente */
+    padding: 15px 10px; /* Dá um espacinho interno */
+    align-items: center; /* Centraliza tudo horizontalmente */
+    text-align: center; /* Centraliza texto interno */
+    gap: 15px; /* Spacing healthy entre Marca, Nav, e Ações */
   }
 
-  /* 2. Ajuste do Menu de Navegação (Links) */
-  /* Assume que os links estão num container com a classe .nav-menu */
-  .nav-menu {
-    display: flex; /* Garante que os links fiquem em flex */
+  /* 2. Ajuste do Menu de Navegação Principal (main-nav) */
+  /* Empilha os links verticalmente e faz ocupar toda a largura */
+  .main-nav {
+    display: flex;
     flex-direction: column; /* Coloca os links um embaixo do outro */
     width: 100%; /* Ocupa a largura total para centralizar */
-    text-align: center;
-    margin-top: 10px; /* Separa do logo */
-    margin-bottom: 15px; /* Separa da foto */
-    gap: 10px; /* Espaço entre os links verticais */
+    gap: 8px; /* Espaço entre as linhas de links verticais */
+    margin: 0; /* Remove margens genéricas */
   }
 
-  /* Ajuste dos links individuais no Mobile (Agendamentos, Painel Admin, etc) */
-  .nav-menu a {
-    font-size: 16px; /* Aumenta um pouco para facilitar o toque */
-    display: block; /* Ocupa toda a largura da nav-menu */
-    padding: 8px; /* Dá área de toque */
+  /* Ajuste dos links individuais no Mobile (Serviços, Admin, etc) */
+  .main-nav .nav-link {
+    width: 100%; /* Ocupa a largura total para centralizar */
+    display: block; /* Garante layout em bloco */
+    padding: 12px 14px; /* Área de toque maior */
   }
 
-  /* 3. Ajuste do Container da Foto/Nome de Usuário (Onde está o corte/sobreposição) */
-  /* Assume que seu bloco de foto/nome tem a classe .user-actions ou similar */
-  .user-actions {
+  /* 3. Ajuste da Área de Ações/Usuário (header-actions) - Fim da Sobreposição */
+  /* Empilha o User Chip acima do botão de Sair/Entrar */
+  .header-actions {
     display: flex;
-    flex-direction: column-reverse; /* Foto em cima, Nome embaixo para ficar centralizado */
-    align-items: center; /* Centraliza a foto e o texto */
-    width: 100%;
-    text-align: center;
+    flex-direction: column; /* Chip em cima, Botão embaixo */
+    width: 100%; /* Take full width */
+    gap: 12px; /* Spacing entre User Chip e Botão */
+    align-items: center; /* Centraliza horizontalmente */
+    justify-content: center; /* Centraliza horizontalmente */
+    margin-top: 10px; /* Space from main nav */
   }
 
-  /* Centraliza o texto "Walquíria, Gerenciar" e arruma o corte */
-  .user-text-container {
-    margin-right: 0; /* Remove margens antigas que empurravam o texto */
-    margin-top: 8px; /* Espaço entre a foto e o texto */
-    font-size: 12px;
+  /* 4. Correção Fundamental do User Chip Overlapping (Walquíria, Gerenciar, etc) */
+  /* Empilha a Foto acima do Nome/Função e centraliza */
+  .header-actions .user-chip {
+    display: flex;
+    flex-direction: column; /* Foto em cima, Nome embaixo para ficar centralizado */
+    text-align: center; /* Centraliza o texto sob a foto */
+    padding: 15px; /* Breathing room */
+    width: fit-content; /* Don't stretch across the screen */
+    margin: 0 auto; /* Center horizontalmente no container principal */
   }
 
   /* Tira o float da foto e centraliza */
-  .user-info img {
-    float: none; /* Garante que a foto não flutue à direita */
-    margin: 0 auto; /* Centraliza a foto */
-    width: 50px; /* Reduz um pouco o tamanho no portrait */
-    height: 50px;
+  .user-avatar {
+    float: none; /* Crucial: remove o flutuamento que causa sobreposição */
+    margin: 0 auto 8px auto; /* Centraliza a foto e dá espaço abaixo */
+    width: 45px; /* Slightly bigger portrait visibility */
+    height: 45px;
   }
 
+  .user-chip strong,
+  .user-chip small {
+    display: block; /* Garante que os blocos de texto sejam sólidos */
+  }
 }
 
-/* --- FIM DOS AJUSTES PARA CELULAR --- */
+/* --- FIM DO CABEÇALHO RESPONSIVO CIRÚRGICO --- */
