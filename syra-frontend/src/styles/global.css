@@ -1193,68 +1193,100 @@ textarea:focus {
   }
 }
 
-/* --- INÍCIO DO CABEÇALHO RESPONSIVO CIRÚRGICO --- */
+/* --- INÍCIO DO CABEÇALHO RESPONSIVO REFINADO (GRID + FOTO NITIDA) --- */
 
 /* Quando a tela for menor ou igual a 768px (Mobile Portrait) */
 @media (max-width: 768px) {
 
-  /* 1. Ajuste do Container Principal do Cabeçalho (nav-shell) */
+  /* 1. Ajuste do Container Principal (nav-shell) - Mais compacto verticalmente */
   .site-header .nav-shell {
     flex-direction: column;
     height: auto;
-    padding: 15px 10px;
+    padding: 12px 10px; /* Reduzi o padding vertical */
     align-items: center;
     text-align: center;
-    gap: 15px;
+    gap: 12px; /* Espaçamento saudável, mas menor */
   }
 
-  /* 2. Ajuste do Menu de Navegação Principal (main-nav) */
+  /* 2. Ajuste da Grade de Navegação (main-nav) - TRANSFORMAÇÃO EM GRID 3x2 */
   .main-nav {
-    display: flex;
-    flex-direction: column;
+    display: grid !important; /* Força o uso de Grid */
+    grid-template-columns: repeat(3, 1fr); /* Cria 3 colunas iguais */
     width: 100%;
-    gap: 8px;
+    gap: 6px; /* Espaço pequeno entre os botões da grade */
     margin: 0;
+    justify-content: center;
   }
 
+  /* Ajuste dos links individuais na grade */
   .main-nav .nav-link {
     width: 100%;
-    display: block;
-    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 6px; /* Padding menor para caber 3 na linha */
+    font-size: 14px; /* Fonte ligeiramente menor no portrait */
+    border-radius: 12px; /* Raio menor para combinar com a grade */
+    text-align: center;
   }
 
-  /* 3. Ajuste da Área de Ações/Usuário (header-actions) */
+  /* REGRA ESPECIAL: Destacar o botão ADMIN e Meus Agendamentos */
+  /* Faz com que links específicos ocupem todas as 3 colunas e pulem de linha */
+  .main-nav .nav-link[href="/admin"],
+  .main-nav .nav-link[href="/meus-agendamentos"] {
+    grid-column: 1 / -1; /* Ocupa da coluna 1 até a última */
+    margin-top: 4px; /* Dá um espacinho da grade acima */
+    background: rgba(146, 95, 119, 0.12); /* Fundo ligeiramente diferente para destacar */
+    font-weight: 600;
+  }
+
+  /* 3. Ajuste da Área de Ações (header-actions) - Alinhamento */
   .header-actions {
     display: flex;
     flex-direction: column;
     width: 100%;
-    gap: 12px;
+    gap: 10px;
     align-items: center;
     justify-content: center;
-    margin-top: 10px;
+    margin-top: 5px;
   }
 
-  /* 4. Correção Fundamental do User Chip Overlapping */
+  /* 4. Correção Fundamental da Foto Nitida (User Chip) */
   .header-actions .user-chip {
     display: flex;
-    flex-direction: column;
-    text-align: center;
-    padding: 15px;
+    flex-direction: row; /* Volta a ficar lado a lado no refined */
+    align-items: center;
+    text-align: left;
+    padding: 10px 15px;
     width: fit-content;
     margin: 0 auto;
+
+    /* MÁGICA PARA A FOTO NÃO FICAR APAGADA: */
+    background: white; /* Fundo branco sólido isola do fundo do site */
+    border: 1px solid rgba(146, 95, 119, 0.25); /* Borda mais visível */
+    box-shadow: 0 4px 12px rgba(70, 35, 50, 0.08); /* Sombra leve dá profundidade */
   }
 
   .user-avatar {
     float: none;
-    margin: 0 auto 8px auto;
-    width: 45px;
-    height: 45px;
+    margin: 0; /* Remove margens antigas */
+    width: 42px; /* Tamanho equilibrado */
+    height: 42px;
+    border: 2px solid white; /* Borda branca interna na foto */
+    box-shadow: 0 0 0 1px rgba(146, 95, 119, 0.2); /* Linha fina ao redor da foto */
   }
 
-  .user-chip strong,
+  /* Garante espaçamento entre foto e texto no chip lado-a-lado */
+  .user-chip div {
+    margin-left: 10px;
+  }
+
+  .user-chip strong {
+    font-size: 14px;
+  }
   .user-chip small {
-    display: block;
+    font-size: 11px;
   }
 }
 
-/* --- FIM DO CABEÇALHO RESPONSIVO CIRÚRGICO --- */
+/* --- FIM DO CABEÇALHO RESPONSIVO REFINADO --- */
