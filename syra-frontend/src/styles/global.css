@@ -204,13 +204,12 @@ h4 {
   font-weight: 700;
 }
 
-..hero-section {
+.hero-section {
   position: relative;
   min-height: calc(100vh - 82px);
   display: grid;
   align-items: center;
   overflow: hidden;
-  /* Pintamos o fundo com a cor bege do seu tema para disfarçar o vazio */
   background-color: var(--bg);
 }
 
@@ -223,7 +222,6 @@ h4 {
 .hero-image {
   width: 100%;
   height: 100%;
-  /* Volta para o contain para garantir o corpo 100% visível sem cortes */
   object-fit: contain;
   object-position: center;
 }
@@ -1194,73 +1192,68 @@ textarea:focus {
     padding: 56px 0;
   }
 }
+
 /* --- INÍCIO DO CABEÇALHO RESPONSIVO CIRÚRGICO --- */
 
 /* Quando a tela for menor ou igual a 768px (Mobile Portrait) */
 @media (max-width: 768px) {
 
   /* 1. Ajuste do Container Principal do Cabeçalho (nav-shell) */
-  /* Empilha Marca, Menu e Ações verticalmente e centraliza */
   .site-header .nav-shell {
-    flex-direction: column; /* Empilha: Logo, Nav, Ações */
-    height: auto; /* Permite que o cabeçalho cresça verticalmente */
-    padding: 15px 10px; /* Dá um espacinho interno */
-    align-items: center; /* Centraliza tudo horizontalmente */
-    text-align: center; /* Centraliza texto interno */
-    gap: 15px; /* Spacing healthy entre Marca, Nav, e Ações */
+    flex-direction: column;
+    height: auto;
+    padding: 15px 10px;
+    align-items: center;
+    text-align: center;
+    gap: 15px;
   }
 
   /* 2. Ajuste do Menu de Navegação Principal (main-nav) */
-  /* Empilha os links verticalmente e faz ocupar toda a largura */
   .main-nav {
     display: flex;
-    flex-direction: column; /* Coloca os links um embaixo do outro */
-    width: 100%; /* Ocupa a largura total para centralizar */
-    gap: 8px; /* Espaço entre as linhas de links verticais */
-    margin: 0; /* Remove margens genéricas */
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+    margin: 0;
   }
 
-  /* Ajuste dos links individuais no Mobile (Serviços, Admin, etc) */
   .main-nav .nav-link {
-    width: 100%; /* Ocupa a largura total para centralizar */
-    display: block; /* Garante layout em bloco */
-    padding: 12px 14px; /* Área de toque maior */
+    width: 100%;
+    display: block;
+    padding: 12px 14px;
   }
 
-  /* 3. Ajuste da Área de Ações/Usuário (header-actions) - Fim da Sobreposição */
-  /* Empilha o User Chip acima do botão de Sair/Entrar */
+  /* 3. Ajuste da Área de Ações/Usuário (header-actions) */
   .header-actions {
     display: flex;
-    flex-direction: column; /* Chip em cima, Botão embaixo */
-    width: 100%; /* Take full width */
-    gap: 12px; /* Spacing entre User Chip e Botão */
-    align-items: center; /* Centraliza horizontalmente */
-    justify-content: center; /* Centraliza horizontalmente */
-    margin-top: 10px; /* Space from main nav */
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
   }
 
-  /* 4. Correção Fundamental do User Chip Overlapping (Walquíria, Gerenciar, etc) */
-  /* Empilha a Foto acima do Nome/Função e centraliza */
+  /* 4. Correção Fundamental do User Chip Overlapping */
   .header-actions .user-chip {
     display: flex;
-    flex-direction: column; /* Foto em cima, Nome embaixo para ficar centralizado */
-    text-align: center; /* Centraliza o texto sob a foto */
-    padding: 15px; /* Breathing room */
-    width: fit-content; /* Don't stretch across the screen */
-    margin: 0 auto; /* Center horizontalmente no container principal */
+    flex-direction: column;
+    text-align: center;
+    padding: 15px;
+    width: fit-content;
+    margin: 0 auto;
   }
 
-  /* Tira o float da foto e centraliza */
   .user-avatar {
-    float: none; /* Crucial: remove o flutuamento que causa sobreposição */
-    margin: 0 auto 8px auto; /* Centraliza a foto e dá espaço abaixo */
-    width: 45px; /* Slightly bigger portrait visibility */
+    float: none;
+    margin: 0 auto 8px auto;
+    width: 45px;
     height: 45px;
   }
 
   .user-chip strong,
   .user-chip small {
-    display: block; /* Garante que os blocos de texto sejam sólidos */
+    display: block;
   }
 }
 
