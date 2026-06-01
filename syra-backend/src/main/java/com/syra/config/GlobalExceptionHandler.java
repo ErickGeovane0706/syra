@@ -1,8 +1,11 @@
 package com.syra.config;
 
+import jakarta.persistence.OptimisticLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.dao.CannotSerializeTransactionException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -77,6 +80,32 @@ public class GlobalExceptionHandler {
                 .error("Conflito de recurso")
                 .build();
         return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    // Erro de concorrência (optimistic lock / serializable)
+    @ExceptionHandler({OptimisticLockException.class, ObjectOptimisticLockingFailureException.class, CannotSerializeTransactionException.class})
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ResponseEntity<ErrorResponse> handleConcurrencyException(Exception e) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.CONFLICT.value())
+                .message("O registro foi alterado por outro usuário. Tente novamente.")
+                .error("CONCURRENCY_CONFLICT")
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.CONFLICT);
+    }
+
+    // Erro de integracao com Google Agenda
+    @ExceptionHandler(CalendarIntegrationException.class)
+    @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
+    public ResponseEntity<ErrorResponse> handleCalendarIntegration(CalendarIntegrationException e) {
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.SERVICE_UNAVAILABLE.value())
+                .message(e.getMessage())
+                .error("GOOGLE_CALENDAR_UNAVAILABLE")
+                .build();
+        return new ResponseEntity<>(errorResponse, HttpStatus.SERVICE_UNAVAILABLE);
     }
 
     // Erro de autenticação

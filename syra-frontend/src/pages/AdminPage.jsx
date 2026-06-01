@@ -95,6 +95,18 @@ export default function AdminPage({
     return () => { cancelled = true; };
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab !== 'agendamentos') return undefined;
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        reloadAppointments();
+      }
+    }, 30000);
+
+    return () => window.clearInterval(interval);
+  }, [activeTab]);
+
   const workingDays = useMemo(
       () => schedules.filter((s) => s?.trabalhaNesseDia).length,
       [schedules],

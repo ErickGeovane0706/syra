@@ -54,7 +54,7 @@ export default function ProductsPage({ products, loading }) {
                 <p>Adicione os produtos desejados à sua sacola e finalize a compra diretamente pelo WhatsApp com a nossa equipe.</p>
             </div>
 
-            <div className="site-shell split-section" style={{ gridTemplateColumns: '1.3fr 0.7fr' }}>
+            <div className="site-shell split-section products-layout">
                 {/* Catálogo de Produtos */}
                 <div>
                     {loading ? (
@@ -62,18 +62,18 @@ export default function ProductsPage({ products, loading }) {
                     ) : products.length > 0 ? (
                         <div className="card-grid two-columns">
                             {products.map((product) => (
-                                <article key={product.id} className="card service-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                                <article key={product.id} className="card service-card product-card">
                                     {product.imagemUrl && (
                                         <img
                                             src={product.imagemUrl}
                                             alt={product.titulo}
-                                            style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '16px', marginBottom: '16px' }}
+                                            className="product-image"
                                         />
                                     )}
-                                    <span className="card-badge" style={{ alignSelf: 'flex-start' }}>Estoque: {product.estoque}</span>
+                                    <span className="card-badge product-badge">Estoque: {product.estoque}</span>
                                     <h3>{product.titulo}</h3>
-                                    <p style={{ flexGrow: 1 }}>{product.descricao}</p>
-                                    <div className="service-meta" style={{ marginTop: 'auto', paddingTop: '16px' }}>
+                                    <p className="product-description">{product.descricao}</p>
+                                    <div className="service-meta product-actions">
                                         <strong style={{ fontSize: '1.3rem' }}>{formatMoney(product.preco)}</strong>
                                         <button
                                             className="button button-primary button-sm"
@@ -92,23 +92,23 @@ export default function ProductsPage({ products, loading }) {
                 </div>
 
                 {/* Carrinho de Compras */}
-                <div style={{ position: 'sticky', top: '100px' }}>
+                <div className="products-cart">
                     <div className="card contact-card">
                         <h2>Sua Sacola</h2>
                         {cart.length === 0 ? (
                             <p>Sua sacola está vazia. Adicione produtos para continuar.</p>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            <div className="cart-list">
                                 {cart.map((item) => (
-                                    <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--line)', paddingBottom: '12px' }}>
+                                    <div key={item.id} className="cart-item">
                                         <div>
                                             <strong style={{ display: 'block' }}>{item.quantidade}x {item.titulo}</strong>
                                             <span style={{ color: 'var(--muted)', fontSize: '0.9rem' }}>{formatMoney(item.preco)} cada</span>
                                         </div>
-                                        <button className="ghost-button" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={() => removeFromCart(item.id)}>Remover</button>
+                                        <button className="ghost-button cart-remove" onClick={() => removeFromCart(item.id)}>Remover</button>
                                     </div>
                                 ))}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.2rem', marginTop: '10px' }}>
+                                <div className="cart-total">
                                     <strong>Total:</strong>
                                     <strong>{formatMoney(cartTotal)}</strong>
                                 </div>

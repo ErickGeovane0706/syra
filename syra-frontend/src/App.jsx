@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Footer from './components/Footer';
 import Header from './components/Header';
@@ -108,14 +108,35 @@ export default function App() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [warmingUp, setWarmingUp] = useState(false);
+  const [retryCount, setRetryCount] = useState(0);
   const [session, setSession] = useState(() => loadStoredSession());
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState('');
   const [authModalOpen, setAuthModalOpen] = useState(false);
 
+  const retryTimerRef = useRef(null);
+  const loadInitialRef = useRef(null);
+
+  function isWakeupError(err) {
+    if (!err) return false;
+    const status = err?.response?.status;
+    if (!status) return true;
+    return [502, 503, 504].includes(status);
+  }
+
+  const scheduleRetry = useCallback((nextDelayMs) => {
+    if (retryTimerRef.current) return;
+    retryTimerRef.current = window.setTimeout(() => {
+      retryTimerRef.current = null;
+      loadInitialRef.current?.();
+    }, nextDelayMs);
+  }, []);
+
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     setError('');
+    let stopLoading = true;
 
     try {
       const [servicesData, schedulesData, adminsData, productsData] = await Promise.all([
@@ -129,11 +150,39 @@ export default function App() {
       setSchedules(schedulesData);
       setAdmins(Array.isArray(adminsData) ? adminsData : []);
       setProducts(productsData || []);
+      setWarmingUp(false);
+      setRetryCount(0);
     } catch (err) {
+      if (isWakeupError(err)) {
+        setWarmingUp(true);
+        setError('');
+        stopLoading = false;
+        setRetryCount((count) => {
+          const next = Math.min(count + 1, 8);
+          const delay = Math.min(30000, 2000 * next);
+          scheduleRetry(delay);
+          return next;
+        });
+        return;
+      }
+
       const apiMessage = err?.response?.data?.message;
+      setWarmingUp(false);
       setError(apiMessage || 'Não foi possível carregar os dados do sistema.');
     } finally {
-      setLoading(false);
+      if (stopLoading) {
+        setLoading(false);
+      }
+    }
+  }, [scheduleRetry]);
+
+  useEffect(() => {
+    loadInitialRef.current = loadInitialData;
+  }, [loadInitialData]);
+
+  useEffect(() => () => {
+    if (retryTimerRef.current) {
+      clearTimeout(retryTimerRef.current);
     }
   }, []);
 
@@ -255,6 +304,22 @@ export default function App() {
             onOpenAuth={() => setAuthModalOpen(true)}
             onLogout={handleLogout}
         />
+
+        {warmingUp ? (
+          <div className="warmup-banner">
+            <div className="warmup-card">
+              <div>
+                <strong>Estamos acordando o servidor...</strong>
+                <span>Isso pode levar alguns segundos. Obrigada por aguardar.</span>
+              </div>
+              <div className="warmup-dots" aria-hidden="true">
+                <span className="warmup-dot" />
+                <span className="warmup-dot" />
+                <span className="warmup-dot" />
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {error ? (
             <div className="site-shell global-alert" role="alert">

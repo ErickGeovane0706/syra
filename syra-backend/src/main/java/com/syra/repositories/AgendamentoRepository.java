@@ -25,8 +25,18 @@ public interface AgendamentoRepository extends JpaRepository<Agendamento, Long> 
     List<Agendamento> findByPeriodo(@Param("inicio") LocalDateTime inicio, @Param("fim") LocalDateTime fim);
 
     // Retorna true se encontrar algum agendamento confirmado que sobreponha o horário desejado
-    @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Agendamento a " +
-            "WHERE a.status = 'CONFIRMADO' " +
+        @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Agendamento a " +
+            "WHERE a.status IN ('CONFIRMADO', 'PENDENTE') " +
             "AND (a.dataHoraInicio < :fim AND a.dataHoraFim > :inicio)")
     boolean existeConflitoDeHorario(@Param("inicio") LocalDateTime inicio, @Param("fim") LocalDateTime fim);
+
+        @Query("SELECT CASE WHEN COUNT(a) > 0 THEN true ELSE false END FROM Agendamento a " +
+            "WHERE a.status IN ('CONFIRMADO', 'PENDENTE') " +
+            "AND a.id <> :id " +
+            "AND (a.dataHoraInicio < :fim AND a.dataHoraFim > :inicio)")
+        boolean existeConflitoDeHorarioExcetoId(
+            @Param("id") Long id,
+            @Param("inicio") LocalDateTime inicio,
+            @Param("fim") LocalDateTime fim
+        );
 }

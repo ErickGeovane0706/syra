@@ -1,5 +1,6 @@
 package com.syra.service;
 
+import com.syra.config.ConflictException;
 import com.syra.config.EntityNotFoundException;
 import com.syra.dto.AgendamentoCriarDTO;
 import com.syra.models.Agendamento;
@@ -12,6 +13,9 @@ import com.syra.repositories.ServicoRepository;
 import com.syra.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -25,7 +29,9 @@ public class AgendamentoService {
     private final ServicoRepository servicoRepository;
     private final UsuarioRepository usuarioRepository;
     private final HorarioAtendimentoRepository horarioRepository;
+    private final GoogleCalendarService googleCalendarService;
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Agendamento criarAgendamento(AgendamentoCriarDTO dto) {
         Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
                 .orElseThrow(() -> new EntityNotFoundException("Usuario não encontrado com ID: " + dto.getUsuarioId()));
@@ -63,7 +69,7 @@ public class AgendamentoService {
         }
 
         if (agendamentoRepository.existeConflitoDeHorario(inicio, fim)) {
-            throw new IllegalArgumentException("Este horário já está reservado.");
+            throw new ConflictException("Este horário já está reservado.");
         }
 
         Agendamento agendamento = Agendamento.builder()
@@ -71,10 +77,17 @@ public class AgendamentoService {
                 .servico(servico)
                 .dataHoraInicio(inicio)
                 .dataHoraFim(fim)
-                .status("CONFIRMADO")
+                .status("PENDENTE")
                 .build();
 
-        return agendamentoRepository.save(agendamento);
+        Agendamento saved = agendamentoRepository.save(agendamento);
+        String eventId = googleCalendarService.createOrUpdateEvent(saved);
+        if (eventId != null) {
+            saved.setGoogleEventId(eventId);
+            saved = agendamentoRepository.save(saved);
+        }
+
+        return saved;
     }
 
     public Agendamento obterPorId(Long id) {
@@ -98,6 +111,7 @@ public class AgendamentoService {
         return agendamentoRepository.findByPeriodo(inicio, fim);
     }
 
+    @Transactional
     public Agendamento cancelarAgendamento(Long id, String observacoes) {
         Agendamento agendamento = obterPorId(id);
 
@@ -107,16 +121,36 @@ public class AgendamentoService {
 
         agendamento.setStatus("CANCELADO");
         agendamento.setObservacoes(observacoes != null ? observacoes : "Cancelado pelo cliente");
+        googleCalendarService.cancelEventIfPresent(agendamento);
+        agendamento.setGoogleEventId(null);
 
         return agendamentoRepository.save(agendamento);
     }
 
+    @Transactional
     public Agendamento confirmarAgendamento(Long id) {
         Agendamento agendamento = obterPorId(id);
+
+        if ("CANCELADO".equals(agendamento.getStatus())) {
+            throw new ConflictException("Não é possível confirmar um agendamento cancelado.");
+        }
+
+        if ("CONFIRMADO".equals(agendamento.getStatus()) && StringUtils.hasText(agendamento.getGoogleEventId())) {
+            return agendamento;
+        }
+
         agendamento.setStatus("CONFIRMADO");
-        return agendamentoRepository.save(agendamento);
+        Agendamento saved = agendamentoRepository.save(agendamento);
+        String eventId = googleCalendarService.createOrUpdateEvent(saved);
+        if (eventId != null) {
+            saved.setGoogleEventId(eventId);
+            saved = agendamentoRepository.save(saved);
+        }
+
+        return saved;
     }
 
+    @Transactional(isolation = Isolation.SERIALIZABLE)
     public Agendamento reagendarAgendamento(Long id, LocalDateTime novaData) {
         Agendamento agendamento = obterPorId(id);
 
@@ -131,20 +165,26 @@ public class AgendamentoService {
 
         LocalDateTime novaFim = novaData.plusMinutes(agendamento.getServico().getDuracaoMinutos());
 
-        if (agendamentoRepository.existeConflitoDeHorario(novaData, novaFim)) {
-            throw new IllegalArgumentException("Este horário já está reservado.");
+        if (agendamentoRepository.existeConflitoDeHorarioExcetoId(id, novaData, novaFim)) {
+            throw new ConflictException("Este horário já está reservado.");
         }
 
         agendamento.setDataHoraInicio(novaData);
         agendamento.setDataHoraFim(novaFim);
 
-        return agendamentoRepository.save(agendamento);
+        Agendamento saved = agendamentoRepository.save(agendamento);
+        String eventId = googleCalendarService.createOrUpdateEvent(saved);
+        if (eventId != null) {
+            saved.setGoogleEventId(eventId);
+            saved = agendamentoRepository.save(saved);
+        }
+
+        return saved;
     }
 
     public void deletarAgendamento(Long id) {
-        if (!agendamentoRepository.existsById(id)) {
-            throw new EntityNotFoundException("Agendamento não encontrado com ID: " + id);
-        }
-        agendamentoRepository.deleteById(id);
+        Agendamento agendamento = obterPorId(id);
+        googleCalendarService.cancelEventIfPresent(agendamento);
+        agendamentoRepository.deleteById(agendamento.getId());
     }
 }

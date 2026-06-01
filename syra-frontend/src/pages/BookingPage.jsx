@@ -177,6 +177,31 @@ export default function BookingPage({
         onSessionUpdate({ telefone: updated?.telefone || telefone.trim() });
       }
 
+      try {
+        const refreshed = await fetchAppointmentsByPeriod(
+          `${selectedDate}T00:00:00`,
+          `${selectedDate}T23:59:59`,
+        );
+        const dayKey = getDayKeyFromDate(selectedDate);
+        const sched = schedules.find((s) => s?.diaDaSemana === dayKey);
+        const freshSlots = buildAvailableSlots({
+          date: selectedDate,
+          schedule: sched,
+          serviceDuration: selectedService?.duracaoMinutos,
+          appointments: refreshed,
+        });
+        const stillAvailable = freshSlots.some((slot) => slot.value === selectedSlot);
+        if (!stillAvailable) {
+          setFeedback({
+            type: 'error',
+            message: 'Este horário acabou de ser reservado. Escolha outro horário disponível.',
+          });
+          return;
+        }
+      } catch {
+        // Se falhar a revalidacao, seguimos e deixamos o backend validar
+      }
+
       await createAppointment({
         usuarioId: session.id,
         servicoId: Number(selectedServiceId),
@@ -194,7 +219,7 @@ export default function BookingPage({
       setSelectedSlot('');
       setFeedback({
         type: 'success',
-        message: 'Agendamento confirmado com sucesso! Seu horário já está reservado.',
+        message: 'Pedido enviado! Aguarde a confirmação da administradora.',
       });
     } catch (error) {
       const msg = error?.response?.data?.message;
