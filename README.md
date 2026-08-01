@@ -280,5 +280,5 @@ docker-compose up -d
 
 ---
 
-**Desenvolvido por Erick e Valdilene - 2026**
+**Desenvolvido - 2026**
 
