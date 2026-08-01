@@ -50,8 +50,8 @@ npm run dev
 ## 👥 USUÁRIOS ADMINISTRADORES
 
 Apenas estes e-mails têm acesso ao painel admin (`/admin`):
-- `erickgeovane2002@gmail.com`
-- `valdilenehyuuga1@gmail.com`
+- `seu usuario`
+- `seu usuario`
 
 Qualquer outro e-mail terá role **CLIENTE**.
 
