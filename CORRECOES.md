@@ -157,7 +157,7 @@ Após reiniciar o sistema, verifique:
 - [ ] Login com Google funciona e redireciona corretamente
 - [ ] Token JWT é salvo no localStorage
 - [ ] Requisições incluem header `Authorization: Bearer {token}`
-- [ ] Usuários admin (`erickgeovane2002@gmail.com` e `valdilenehyuuga1@gmail.com`) têm acesso ao `/admin`
+- [ ] Usuários admin (`admin1@exemplo.com` e `admin2@exemplo.com`) têm acesso ao `/admin`
 - [ ] Outros usuários têm role CLIENTE
 - [ ] Script `teste-syra.bat` executa com sucesso (status 200/201/409)
 

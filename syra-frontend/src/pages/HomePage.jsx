@@ -8,7 +8,6 @@ export default function HomePage({
   loading,
   session,
   onGoogleLogin,
-  onOpenAuth,
 }) {
   const featuredServices = services.slice(0, 3);
   const visibleSchedules = schedules.slice(0, 4);

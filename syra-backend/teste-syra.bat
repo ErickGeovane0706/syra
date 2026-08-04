@@ -16,14 +16,14 @@ echo.
 echo [2/14] Criando Admin Erick...
 curl -X POST http://localhost:8080/api/usuarios/register ^
   -H "Content-Type: application/json" ^
-  -d "{\"nome\":\"Admin Erick\",\"email\":\"erickgeovane2002@gmail.com\",\"senha\":\"admin123\",\"cpf\":\"11111111111\",\"role\":\"ADMIN\",\"telefone\":\"11987654321\"}" ^
+  -d "{\"nome\":\"Admin Erick\",\"email\":\"admin1@exemplo.com\",\"senha\":\"admin123\",\"cpf\":\"11111111111\",\"role\":\"ADMIN\",\"telefone\":\"11987654321\"}" ^
   -s -w "Status: %%{http_code}\n" | findstr "Status"
 echo.
 
-echo [3/14] Criando Admin Valdilene...
+echo [3/14] Criando Admin Exemplo...
 curl -X POST http://localhost:8080/api/usuarios/register ^
   -H "Content-Type: application/json" ^
-  -d "{\"nome\":\"Admin Valdilene\",\"email\":\"valdilenehyuuga1@gmail.com\",\"senha\":\"admin123\",\"cpf\":\"22222222222\",\"role\":\"ADMIN\",\"telefone\":\"11912345678\"}" ^
+  -d "{\"nome\":\"Admin Exemplo\",\"email\":\"admin2@exemplo.com\",\"senha\":\"admin123\",\"cpf\":\"22222222222\",\"role\":\"ADMIN\",\"telefone\":\"11912345678\"}" ^
   -s -w "Status: %%{http_code}\n" | findstr "Status"
 echo.
 
@@ -97,8 +97,8 @@ echo.
 echo Se todos os status foram 200/201, a API está funcionando perfeitamente!
 echo.
 echo Usuários admin criados:
-echo - erickgeovane2002@gmail.com
-echo - valdilenehyuuga1@gmail.com
+echo - admin1@exemplo.com
+echo - admin2@exemplo.com
 echo.
 echo Para verificar os dados:
 echo - PgAdmin: http://localhost:5050

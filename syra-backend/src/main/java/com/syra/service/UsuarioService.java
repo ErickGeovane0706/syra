@@ -6,6 +6,7 @@ import com.syra.dto.UsuarioCriarDTO;
 import com.syra.models.Usuario;
 import com.syra.repositories.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Arrays;
@@ -17,15 +18,14 @@ public class UsuarioService {
 
     private final UsuarioRepository usuarioRepository;
 
-    // Lista de administradores com permissão total
-    private final List<String> emailsAdmin = Arrays.asList(
-            "erickgeovane2002@gmail.com",
-            "valdilenehyuuga1@gmail.com"
-    );
+    // Administradores com permissão total, separados por vírgula. Vem da variável de
+    // ambiente ADMIN_EMAILS: e-mail é dado pessoal e não pode ser versionado no código.
+    @Value("${app.admin.emails:}")
+    private String emailsAdmin;
 
     public Usuario processarLoginGoogle(String email, String nome, String fotoUrl) {
         // Define a role com base na lista de e-mails
-        String roleAtribuida = emailsAdmin.contains(email) ? "ADMIN" : "CLIENTE";
+        String roleAtribuida = isAdmin(email) ? "ADMIN" : "CLIENTE";
 
         return usuarioRepository.findByEmail(email)
                 .map(usuario -> {
@@ -43,6 +43,16 @@ public class UsuarioService {
                             .build();
                     return usuarioRepository.save(novoUsuario);
                 });
+    }
+
+    private boolean isAdmin(String email) {
+        if (email == null || emailsAdmin == null || emailsAdmin.isBlank()) {
+            return false;
+        }
+        return Arrays.stream(emailsAdmin.split(","))
+                .map(String::trim)
+                .filter(e -> !e.isEmpty())
+                .anyMatch(e -> e.equalsIgnoreCase(email));
     }
 
     public Usuario criarUsuario(UsuarioCriarDTO dto) {

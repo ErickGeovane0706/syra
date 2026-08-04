@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,6 +28,14 @@ public class UsuarioController {
     public ResponseEntity<Usuario> registrarUsuario(@Valid @RequestBody UsuarioCriarDTO dto) {
         Usuario usuario = usuarioService.criarUsuario(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(usuario);
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Obter o usuário autenticado")
+    public ResponseEntity<Usuario> obterUsuarioAutenticado(Authentication authentication) {
+        // A identidade vem do token, nunca de um e-mail passado na URL: assim um cliente
+        // logado nao consegue ler o cadastro de outro so trocando o parametro.
+        return ResponseEntity.ok(usuarioService.obterPorEmail(authentication.getName()));
     }
 
     @GetMapping
@@ -74,13 +83,4 @@ public class UsuarioController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/teste")
-    @Operation(summary = "Teste de login via Google (desenvolvimento)")
-    public ResponseEntity<Usuario> criarTeste(@RequestBody Usuario usuario) {
-        return ResponseEntity.ok(usuarioService.processarLoginGoogle(
-                usuario.getEmail(),
-                usuario.getNome(),
-                usuario.getFotoPerfilUrl()
-        ));
-    }
 }

@@ -51,7 +51,7 @@ teste-syra.bat
 ```
 
 **O que testa**:
-1. ✅ Criação de admins (erickgeovane2002@gmail.com e valdilenehyuuga1@gmail.com)
+1. ✅ Criação de admins (admin1@exemplo.com e admin2@exemplo.com)
 2. ✅ Criação de cliente teste
 3. ✅ Listagem de usuários
 4. ✅ Criação de 2 serviços
@@ -120,8 +120,8 @@ npm run dev
 ## 👥 USUÁRIOS ADMIN
 
 **Apenas estes e-mails têm acesso ao painel `/admin`**:
-- `erickgeovane2002@gmail.com`
-- `valdilenehyuuga1@gmail.com`
+- `admin1@exemplo.com`
+- `admin2@exemplo.com`
 
 Qualquer outro e-mail = **CLIENTE**
 
