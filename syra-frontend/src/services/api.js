@@ -55,29 +55,14 @@ export async function registerUser(payload) {
   return data;
 }
 
-export async function loginDevelopmentUser(payload) {
-  const { data } = await api.post('/usuarios/teste', payload);
+export async function fetchCurrentUser() {
+  const { data } = await api.get('/usuarios/me');
   return data;
 }
 
 export async function updateUserPhone(userId, numero) {
   const { data } = await api.put(`/usuarios/${userId}/telefone`, { numero });
   return data;
-}
-
-export async function findOrCreateUser(payload) {
-  try {
-    const existing = await fetchUserByEmail(payload.email);
-    if (existing?.id) {
-      return existing;
-    }
-  } catch (error) {
-    if (error?.response?.status !== 404) {
-      throw error;
-    }
-  }
-
-  return registerUser(payload);
 }
 
 export async function createAppointment(payload) {

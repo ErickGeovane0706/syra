@@ -86,8 +86,8 @@ cd C:\Users\08001\Projetos\syra\syra-backend
 ## 👑 Acesso Admin
 
 Apenas estes emails têm acesso ao painel `/admin`:
-- `erickgeovane2002@gmail.com`
-- `valdilenehyuuga1@gmail.com`
+- `admin1@exemplo.com`
+- `admin2@exemplo.com`
 
 ---
 

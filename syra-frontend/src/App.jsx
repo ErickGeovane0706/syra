@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import Footer from './components/Footer';
 import Header from './components/Header';
-import AuthModal from './components/AuthModal';
 import HomePage from './pages/HomePage';
 import ServicesPage from './pages/ServicesPage';
 import BookingPage from './pages/BookingPage';
@@ -16,8 +15,7 @@ import {
   fetchServices,
   fetchProducts,
   fetchUsersByRole,
-  findOrCreateUser,
-  loginDevelopmentUser,
+  fetchCurrentUser,
   saveSchedule,
   createService,
   updateService,
@@ -73,7 +71,7 @@ function clearSessionParamsFromUrl() {
   window.history.replaceState({}, document.title, `${url.pathname}${url.search}${url.hash}`);
 }
 
-function AccessNotice({ session, onGoogleLogin, onOpenAuth }) {
+function AccessNotice({ session, onGoogleLogin }) {
   return (
       <section className="page-section">
         <div className="site-shell card not-found-card auth-required-card">
@@ -82,18 +80,13 @@ function AccessNotice({ session, onGoogleLogin, onOpenAuth }) {
           <p>
             {session
                 ? 'Somente os e-mails cadastrados como ADMIN no backend podem editar a agenda de trabalho.'
-                : 'Use o login Google para identificar o perfil corretamente. Enquanto o retorno OAuth do backend não volta ao frontend, o acesso local de desenvolvimento continua disponível.'}
+                : 'Entre com sua conta Google para continuar.'}
           </p>
           <div className="hero-actions">
             {!session ? (
-                <>
-                  <button type="button" className="button button-primary" onClick={onGoogleLogin}>
-                    Entrar com Google
-                  </button>
-                  <button type="button" className="button button-secondary" onClick={onOpenAuth}>
-                    Acesso local
-                  </button>
-                </>
+                <button type="button" className="button button-primary" onClick={onGoogleLogin}>
+                  Entrar com Google
+                </button>
             ) : null}
           </div>
         </div>
@@ -113,7 +106,6 @@ export default function App() {
   const [session, setSession] = useState(() => loadStoredSession());
   const [authBusy, setAuthBusy] = useState(false);
   const [authError, setAuthError] = useState('');
-  const [authModalOpen, setAuthModalOpen] = useState(false);
 
   const retryTimerRef = useRef(null);
   const loadInitialRef = useRef(null);
@@ -223,11 +215,9 @@ export default function App() {
     setAuthError('');
 
     try {
-      const user = await findOrCreateUser({
-        nome: profile.nome || profile.name || profile.email?.split('@')[0] || 'Cliente Syra',
-        email: profile.email,
-        telefone: profile.telefone || '',
-      });
+      // O usuario ja foi criado/atualizado pelo OAuth2LoginSuccessHandler no backend.
+      // Aqui so buscamos o registro do proprio usuario, autenticado pelo token.
+      const user = await fetchCurrentUser();
 
       setSession(normalizeSession({ ...profile, ...user }));
     } catch (err) {
@@ -238,25 +228,6 @@ export default function App() {
     }
   }
 
-  async function handleDevelopmentLogin(profile) {
-    setAuthBusy(true);
-    setAuthError('');
-
-    try {
-      const user = await loginDevelopmentUser(profile);
-      setSession(normalizeSession(user) || normalizeSession(profile));
-      setAuthModalOpen(false);
-    } catch (err) {
-      const apiMessage = err?.response?.data?.message;
-      setAuthError(apiMessage || 'Não foi possível concluir o login local.');
-    } finally {
-      setAuthBusy(false);
-    }
-  }
-// Local
- /* function handleGoogleLogin() {
-    window.location.assign('/oauth2/authorization/google');
-  }*/
   function handleGoogleLogin() {
     window.location.assign('https://syra-vw69.onrender.com/oauth2/authorization/google');
   }
@@ -301,7 +272,6 @@ export default function App() {
             isAdmin={isAdmin}
             authBusy={authBusy}
             onGoogleLogin={handleGoogleLogin}
-            onOpenAuth={() => setAuthModalOpen(true)}
             onLogout={handleLogout}
         />
 
@@ -343,7 +313,6 @@ export default function App() {
                     loading={loading}
                     session={session}
                     onGoogleLogin={handleGoogleLogin}
-                    onOpenAuth={() => setAuthModalOpen(true)}
                 />
               }
           />
@@ -394,7 +363,6 @@ export default function App() {
                     <AccessNotice
                         session={session}
                         onGoogleLogin={handleGoogleLogin}
-                        onOpenAuth={() => setAuthModalOpen(true)}
                     />
                 )
               }
@@ -403,14 +371,6 @@ export default function App() {
         </Routes>
 
         <Footer isAdmin={isAdmin} />
-
-        <AuthModal
-            open={authModalOpen}
-            submitting={authBusy}
-            error={authError}
-            onClose={() => setAuthModalOpen(false)}
-            onSubmit={handleDevelopmentLogin}
-        />
       </div>
   );
 }

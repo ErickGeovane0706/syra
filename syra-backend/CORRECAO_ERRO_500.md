@@ -73,8 +73,8 @@ cd C:\Users\08001\Projetos\syra\syra-backend
 1. Acesse http://localhost:5173
 2. Clique em "Acesso local"
 3. Preencha:
-   - Nome: Erick Teste
-   - Email: erickgeovane2002@gmail.com
+   - Nome: Usuario Teste
+   - Email: admin1@exemplo.com
    - Foto: (deixe vazio ou cole uma URL)
 4. Clique em "Entrar"
 

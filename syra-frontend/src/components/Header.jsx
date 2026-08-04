@@ -8,7 +8,7 @@ const links = [
   { to: '/contato', label: 'Contato' },
 ];
 
-export default function Header({ session, isAdmin, authBusy, onGoogleLogin, onOpenAuth, onLogout }) {
+export default function Header({ session, isAdmin, authBusy, onGoogleLogin, onLogout }) {
   return (
     <header className="site-header">
       <div className="site-shell nav-shell">

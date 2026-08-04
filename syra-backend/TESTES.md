@@ -19,12 +19,12 @@ curl -X GET http://localhost:8080/api/usuarios
 # Admin 1
 curl -X POST http://localhost:8080/api/usuarios/register \
   -H "Content-Type: application/json" \
-  -d '{"nome":"Admin Erick","email":"erickgeovane2002@gmail.com","senha":"admin123","cpf":"11111111111","role":"ADMIN","telefone":"11987654321"}'
+  -d '{"nome":"Admin Erick","email":"admin1@exemplo.com","senha":"admin123","cpf":"11111111111","role":"ADMIN","telefone":"11987654321"}'
 
 # Admin 2
 curl -X POST http://localhost:8080/api/usuarios/register \
   -H "Content-Type: application/json" \
-  -d '{"nome":"Admin Valdilene","email":"valdilenehyuuga1@gmail.com","senha":"admin123","cpf":"22222222222","role":"ADMIN","telefone":"11912345678"}'
+  -d '{"nome":"Admin Exemplo","email":"admin2@exemplo.com","senha":"admin123","cpf":"22222222222","role":"ADMIN","telefone":"11912345678"}'
 ```
 **Esperado**: Status 201 para ambos
 
@@ -141,7 +141,7 @@ curl -X GET http://localhost:8080/api/usuarios
 # 2. Criar admin 1
 curl -X POST http://localhost:8080/api/usuarios/register \
   -H "Content-Type: application/json" \
-  -d '{"nome":"Admin Erick","email":"erickgeovane2002@gmail.com","senha":"admin123","cpf":"11111111111","role":"ADMIN","telefone":"11987654321"}'
+  -d '{"nome":"Admin Erick","email":"admin1@exemplo.com","senha":"admin123","cpf":"11111111111","role":"ADMIN","telefone":"11987654321"}'
 
 # ... continuar com os outros testes
 ```
